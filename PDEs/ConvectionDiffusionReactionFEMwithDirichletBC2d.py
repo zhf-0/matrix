@@ -101,21 +101,24 @@ class PDE:
     def dirichlet(self, p):
         return self.solution(p)
 
-def GenerateMat(nx,ny,blockx,blocky):
+def GenerateMat(nx,ny,blockx,blocky,meshtype='quad', space_p=1):
     pde = PDE(0,1,0,1,blockx,blocky)
     domain = pde.domain()
-    mesh = MF.boxmesh2d(domain, nx=nx, ny=ny, meshtype='quad',p=1)
 
-    # space = LagrangeFiniteElementSpace(mesh, p=1)
-    space = ParametricLagrangeFiniteElementSpace(mesh, p=1)
-    # NDof = space.number_of_global_dofs()
+    if meshtype == 'tri':
+        mesh = MF.boxmesh2d(domain, nx=nx, ny=ny, meshtype=meshtype)
+        space = LagrangeFiniteElementSpace(mesh, p=space_p)
+    elif meshtype == 'quad':
+        mesh = MF.boxmesh2d(domain, nx=nx, ny=ny, meshtype=meshtype, p=space_p)
+        space = ParametricLagrangeFiniteElementSpace(mesh, p=space_p)
+
     uh = space.function() 	
     A = space.stiff_matrix(c=pde.diffusion_coefficient)
-    # B = space.convection_matrix(c=pde.convection_coefficient)
-    # M = space.mass_matrix(c=pde.reaction_coefficient)
+    B = space.convection_matrix(c=pde.convection_coefficient)
+    M = space.mass_matrix(c=pde.reaction_coefficient)
     F = space.source_vector(pde.source)
-    # A += B 
-    # A += M
+    A += B 
+    A += M
     
     bc = DirichletBC(space, pde.dirichlet)
     A, F = bc.apply(A, F, uh)
@@ -123,4 +126,27 @@ def GenerateMat(nx,ny,blockx,blocky):
     return A
 
 if __name__ == '__main__':
-    a = GenerateMat(512,512,4,4)
+    print('mesh is quad, p=1')
+    a = GenerateMat(10,10,2,2)
+    print(a.shape,a.nnz)
+
+    print('mesh is quad, p=2')
+    a = GenerateMat(10,10,2,2,space_p=2)
+    print(a.shape,a.nnz)
+
+    print('mesh is quad, p=3')
+    a = GenerateMat(10,10,2,2,space_p=3)
+    print(a.shape,a.nnz)
+
+
+    print('mesh is tri, p=1')
+    a = GenerateMat(10,10,2,2,meshtype='tri')
+    print(a.shape,a.nnz)
+    
+    print('mesh is tri, p=2')
+    a = GenerateMat(10,10,2,2,meshtype='tri',space_p=2)
+    print(a.shape,a.nnz)
+    
+    print('mesh is tri, p=3')
+    a = GenerateMat(10,10,2,2,meshtype='tri',space_p=3)
+    print(a.shape,a.nnz)

@@ -117,7 +117,7 @@ class PDE:
 def GenerateMat(nx,ny):
     #=======================================
     # adjustable config parameters
-    degree = 2 # must >= 2
+    space_p = 2 # must >= 2
 
     x0 = 0.0
     x1 = 1.0
@@ -129,8 +129,8 @@ def GenerateMat(nx,ny):
     domain = pde.domain()
     mesh = MF.boxmesh2d(domain, nx=nx, ny=ny, meshtype='tri')
 
-    uspace = LagrangeFiniteElementSpace(mesh, p=degree)
-    pspace = LagrangeFiniteElementSpace(mesh, p=degree-1)
+    uspace = LagrangeFiniteElementSpace(mesh, p=space_p)
+    pspace = LagrangeFiniteElementSpace(mesh, p=space_p-1)
 
     ugdof = uspace.number_of_global_dofs()
     pgdof = pspace.number_of_global_dofs()

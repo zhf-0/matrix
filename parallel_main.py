@@ -121,7 +121,7 @@ class CreateData:
                 para.DefineRandInt('blockx',20,40)
                 para.CopyValue('blockx', 'blocky')
                 para.RandChoose('meshtype',['tri','quad'])
-                para.DefineRandInt('p',1,4)
+                para.DefineRandInt('space_p',1,4)
 
                 A = pde0.GenerateMat(**para.para)
                 info = para.Register(info)
@@ -133,7 +133,7 @@ class CreateData:
                 para.DefineRandInt('blockx',20,40)
                 para.CopyValue('blockx', 'blocky')
                 para.RandChoose('meshtype',['tri','quad'])
-                para.DefineRandInt('p',1,4)
+                para.DefineRandInt('space_p',1,4)
 
                 A = pde1.GenerateMat(**para.para)
                 info = para.Register(info)

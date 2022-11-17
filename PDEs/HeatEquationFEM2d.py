@@ -62,7 +62,7 @@ class PDE:
 def GenerateMat(nx,ny):
     #=======================================
     # adjustable config parameters
-    degree = 1
+    space_p = 1
 
     x0 = 0.0
     x1 = 1.0
@@ -79,7 +79,7 @@ def GenerateMat(nx,ny):
     smesh = MF.boxmesh2d(domain, nx=nx, ny=ny, meshtype='tri')
     tmesh = UniformTimeLine(t_start, t_end, nt) 
 
-    space = LagrangeFiniteElementSpace(smesh, p=degree)
+    space = LagrangeFiniteElementSpace(smesh, p=space_p)
 
     c = pde.diffusionCoefficient
     A = c*space.stiff_matrix() 

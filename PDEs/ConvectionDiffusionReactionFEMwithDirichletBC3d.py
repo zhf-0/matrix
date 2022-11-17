@@ -121,17 +121,22 @@ class PDE:
     def dirichlet(self, p):
         return self.solution(p)
 
-def GenerateMat(nx,ny,nz,blockx,blocky,blockz):
+def GenerateMat(nx,ny,nz,blockx,blocky,blockz, meshtype='tet', space_p=1 ):
     pde = PDE(0,1,0,1,0,1,blockx,blocky,blockz)
     domain = pde.domain()
-    mesh = MF.boxmesh3d(domain, nx=nx, ny=ny, nz=nz, meshtype='tet')
+    
+    mesh = MF.boxmesh3d(domain, nx=nx, ny=ny, nz=nz, meshtype=meshtype)
+    if meshtype == 'tet':
+        space = LagrangeFiniteElementSpace(mesh, p=space_p)
+    elif meshtype == 'hex':
+        # TODO
+        # space = ParametricLagrangeFiniteElementSpace(mesh, p=space_p)
+        pass
 
-    space = LagrangeFiniteElementSpace(mesh, p=1)
     uh = space.function() 	
-    A = space.parallel_stiff_matrix(c=pde.diffusion_coefficient)
+    A = space.stiff_matrix(c=pde.diffusion_coefficient)
     B = space.convection_matrix(c=pde.convection_coefficient)
     M = space.mass_matrix(c=pde.reaction_coefficient)
-    # M = space.parallel_mass_matrix(c=pde.reaction_coefficient)
     F = space.source_vector(pde.source)
     A += B 
     A += M
@@ -142,4 +147,27 @@ def GenerateMat(nx,ny,nz,blockx,blocky,blockz):
     return A
 
 if __name__ == '__main__':
-    a = GenerateMat(64,64,64,4,4,4)
+    print('mesh is tet, p=1')
+    a = GenerateMat(10,10,10,2,2,2)
+    print(a.shape,a.nnz)
+
+    print('mesh is tet, p=2')
+    a = GenerateMat(10,10,10,2,2,2,space_p=2)
+    print(a.shape,a.nnz)
+
+    print('mesh is tet, p=3')
+    a = GenerateMat(10,10,10,2,2,2,space_p=3)
+    print(a.shape,a.nnz)
+
+
+    print('mesh is hex, p=1')
+    a = GenerateMat(10,10,10,2,2,2,meshtype='hex')
+    print(a.shape,a.nnz)
+    
+    print('mesh is hex, p=2')
+    a = GenerateMat(10,10,10,2,2,2,meshtype='hex',space_p=2)
+    print(a.shape,a.nnz)
+    
+    print('mesh is hex, p=3')
+    a = GenerateMat(10,10,10,2,2,2,meshtype='hex',space_p=3)
+    print(a.shape,a.nnz)

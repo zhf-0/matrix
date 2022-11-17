@@ -94,13 +94,17 @@ class PDE:
     def dirichlet(self, p):
         return self.solution(p)
 
-def GenerateMat(nx,ny,blockx,blocky,meshtype='quad',p=1):
+def GenerateMat(nx,ny,blockx,blocky,meshtype='quad', space_p=1):
     pde = PDE(0,1,0,1,blockx,blocky)
     domain = pde.domain()
-    mesh = MF.boxmesh2d(domain, nx=nx, ny=ny, meshtype=meshtype,p=p)
 
-    # space = LagrangeFiniteElementSpace(mesh, p=1)
-    space = ParametricLagrangeFiniteElementSpace(mesh, p=p)
+    if meshtype == 'tri':
+        mesh = MF.boxmesh2d(domain, nx=nx, ny=ny, meshtype=meshtype)
+        space = LagrangeFiniteElementSpace(mesh, p=space_p)
+    elif meshtype == 'quad':
+        mesh = MF.boxmesh2d(domain, nx=nx, ny=ny, meshtype=meshtype, p=space_p)
+        space = ParametricLagrangeFiniteElementSpace(mesh, p=space_p)
+
     uh = space.function() 	
     A = space.stiff_matrix(c=pde.diffusion_coefficient)
     F = space.source_vector(pde.source)
@@ -111,17 +115,27 @@ def GenerateMat(nx,ny,blockx,blocky,meshtype='quad',p=1):
     return A
 
 if __name__ == '__main__':
-    print('test default parameter')
+    print('mesh is quad, p=1')
     a = GenerateMat(10,10,2,2)
+    print(a.shape,a.nnz)
 
     print('mesh is quad, p=2')
-    a = GenerateMat(10,10,2,2,p=2)
+    a = GenerateMat(10,10,2,2,space_p=2)
+    print(a.shape,a.nnz)
+
     print('mesh is quad, p=3')
-    a = GenerateMat(10,10,2,2,p=3)
+    a = GenerateMat(10,10,2,2,space_p=3)
+    print(a.shape,a.nnz)
+
 
     print('mesh is tri, p=1')
     a = GenerateMat(10,10,2,2,meshtype='tri')
+    print(a.shape,a.nnz)
+    
     print('mesh is tri, p=2')
-    a = GenerateMat(10,10,2,2,meshtype='tri',p=2)
+    a = GenerateMat(10,10,2,2,meshtype='tri',space_p=2)
+    print(a.shape,a.nnz)
+    
     print('mesh is tri, p=3')
-    a = GenerateMat(10,10,2,2,meshtype='tri',p=3)
+    a = GenerateMat(10,10,2,2,meshtype='tri',space_p=3)
+    print(a.shape,a.nnz)
