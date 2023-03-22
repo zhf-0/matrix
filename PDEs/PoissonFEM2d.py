@@ -3,10 +3,10 @@ from fealpy.mesh import MeshFactory as MF, StructureQuadMesh, TriangleMesh
 from fealpy.functionspace import LagrangeFiniteElementSpace
 from fealpy.functionspace import  ParametricLagrangeFiniteElementSpace
 from fealpy.boundarycondition import DirichletBC
-from fealpy.tools.show import showmultirate, show_error_table
+from .Parameters import Parameter
+from .Utility import WriteMatAndVec
 import numpy as np
 import random
-from .Parameters import Parameter
 
 class PDE:
     def __init__(self,x0,x1,y0,y1,blockx,blocky):
@@ -94,7 +94,11 @@ class PDE:
     def dirichlet(self, p):
         return self.solution(p)
 
-def GenerateMat(nx,ny,blockx,blocky,meshtype='quad', space_p=1):
+def GenerateMat(nx,ny,blockx,blocky, mat_type=None, mat_path=None, need_rhs=False,
+                seed=0, meshtype='quad', space_p=1):
+    
+    np.random.seed(seed)
+    random.seed(seed)
     x0 = 0.0
     x1 = 1.0
     y0 = 0.0
@@ -119,12 +123,21 @@ def GenerateMat(nx,ny,blockx,blocky,meshtype='quad', space_p=1):
     eps = 10**(-15)
     A.data[ np.abs(A.data) < eps ] = 0
     A.eliminate_zeros()
-    return A
+    
+    ########################################################
+    #            write matrix A and rhs vector F           #
+    ########################################################
+    WriteMatAndVec(A,F,mat_type,mat_path,need_rhs)
+
+    row_num, col_num = A.shape
+    nnz = A.nnz
+    return row_num, col_num, nnz
 
 class Para(Parameter):
     def __init__(self):
         super().__init__()
 
+    def AddParas(self):
         self.RandChoose('meshtype',['tri','quad'])
         self.DefineRandInt('space_p',1,4)
 
@@ -143,26 +156,26 @@ class Para(Parameter):
 
 if __name__ == '__main__':
     print('mesh is quad, p=1')
-    a = GenerateMat(200,200,2,2)
-    print(a.shape,a.nnz)
+    row_num, col_num, nnz = GenerateMat(200,200,2,2)
+    print(row_num, col_num, nnz)
 
     print('mesh is quad, p=2')
-    a = GenerateMat(110,110,2,2,space_p=2)
-    print(a.shape,a.nnz)
+    row_num, col_num, nnz = GenerateMat(110,110,2,2,space_p=2)
+    print(row_num, col_num, nnz)
 
     print('mesh is quad, p=3')
-    a = GenerateMat(70,70,2,2,space_p=3)
-    print(a.shape,a.nnz)
+    row_num, col_num, nnz = GenerateMat(70,70,2,2,space_p=3)
+    print(row_num, col_num, nnz)
 
 
     print('mesh is tri, p=1')
-    a = GenerateMat(200,200,2,2,meshtype='tri')
-    print(a.shape,a.nnz)
+    row_num, col_num, nnz = GenerateMat(200,200,2,2,meshtype='tri')
+    print(row_num, col_num, nnz)
     
     print('mesh is tri, p=2')
-    a = GenerateMat(110,110,2,2,meshtype='tri',space_p=2)
-    print(a.shape,a.nnz)
+    row_num, col_num, nnz = GenerateMat(110,110,2,2,meshtype='tri',space_p=2)
+    print(row_num, col_num, nnz)
     
     print('mesh is tri, p=3')
-    a = GenerateMat(70,70,2,2,meshtype='tri',space_p=3)
-    print(a.shape,a.nnz)
+    row_num, col_num, nnz = GenerateMat(70,70,2,2,meshtype='tri',space_p=3)
+    print(row_num, col_num, nnz)

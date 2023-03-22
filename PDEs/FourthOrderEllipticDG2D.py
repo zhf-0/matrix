@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # 
-import numpy as np
-from scipy.sparse import bmat
-
 from fealpy.decorator import cartesian
 from fealpy.mesh import MeshFactory as MF
 from fealpy.mesh.HalfEdgeMesh2d import HalfEdgeMesh2d
 from fealpy.mesh import PolygonMesh
 from fealpy.functionspace import ScaledMonomialSpace2d
 from .Parameters import Parameter
+from .Utility import WriteMatAndVec
+import numpy as np
+from scipy.sparse import bmat
+
 
 # class SqrtData():
 class PDE():
@@ -68,7 +69,8 @@ class PDE():
         """
         return self.solution(p)
 
-def GenerateMat(nx,ny, space_p=1, alpha=1, beta=1):
+def GenerateMat(nx,ny, mat_type=None, mat_path=None, need_rhs=False,
+                space_p=1, alpha=1, beta=1):
     x0 = 0.0
     x1 = 1.0
     y0 = 0.0
@@ -109,11 +111,21 @@ def GenerateMat(nx,ny, space_p=1, alpha=1, beta=1):
     eps = 10**(-15)
     AD.data[ np.abs(AD.data) < eps ] = 0
     AD.eliminate_zeros()
-    return AD
+
+    ########################################################
+    #            write matrix A and rhs vector F           #
+    ########################################################
+    WriteMatAndVec(AD,F,mat_type,mat_path,need_rhs)
+
+    row_num, col_num = AD.shape
+    nnz = AD.nnz
+    return row_num, col_num, nnz
 
 class Para(Parameter):
     def __init__(self):
         super().__init__()
+        
+    def AddParas(self):
         self.DefineRandFloat('alpha',0.1,10)
         self.DefineRandFloat('beta',0.1,10)
 
@@ -130,20 +142,20 @@ class Para(Parameter):
 
 if __name__ == '__main__':
     print('p=1')
-    a = GenerateMat(65,65,space_p = 1)
-    print(a.shape,a.nnz)
+    row_num, col_num, nnz = GenerateMat(65,65,space_p = 1)
+    print(row_num, col_num, nnz)
 
-    a = GenerateMat(20,20,space_p = 1)
-    print(a.shape,a.nnz)
+    row_num, col_num, nnz = GenerateMat(20,20,space_p = 1)
+    print(row_num, col_num, nnz)
 
     print('p=2')
-    a = GenerateMat(45,45,space_p = 2)
-    print(a.shape,a.nnz)
-    a = GenerateMat(10,10,space_p = 2)
-    print(a.shape,a.nnz)
+    row_num, col_num, nnz = GenerateMat(45,45,space_p = 2)
+    print(row_num, col_num, nnz)
+    row_num, col_num, nnz = GenerateMat(10,10,space_p = 2)
+    print(row_num, col_num, nnz)
 
     print('p=3')
-    a = GenerateMat(35,35,space_p = 3)
-    print(a.shape,a.nnz)
-    a = GenerateMat(10,10,space_p = 3)
-    print(a.shape,a.nnz)
+    row_num, col_num, nnz = GenerateMat(35,35,space_p = 3)
+    print(row_num, col_num, nnz)
+    row_num, col_num, nnz = GenerateMat(10,10,space_p = 3)
+    print(row_num, col_num, nnz)

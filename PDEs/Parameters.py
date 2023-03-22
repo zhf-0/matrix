@@ -3,6 +3,12 @@ import numpy as np
 class Parameter:
     def __init__(self):
         self.para = {}
+        self.others = {}
+
+        self.AddParas()
+
+    def AddParas(self):
+        pass
 
     def DefineRandInt(self,name,begin,end,num=1):
         if num == 1:
@@ -26,6 +32,6 @@ class Parameter:
         idx = np.random.randint(0,len(list_val))
         self.para[name] = list_val[idx]
 
-    def Register(self,info):
-        info.update(self.para)
-        return info
+    # def Register(self,info):
+    #     info['para'] = self.para
+    #     return info

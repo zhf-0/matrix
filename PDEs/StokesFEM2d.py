@@ -8,53 +8,26 @@ from fealpy.mesh import MeshFactory as MF
 from fealpy.functionspace import LagrangeFiniteElementSpace
 from fealpy.functionspace import ScaledMonomialSpace2d 
 from fealpy.boundarycondition import DirichletBC 
-# from fealpy.pde.stokes_model_2d import StokesModelData_6 as PDE
 
 from fealpy.decorator import cartesian
+from .Parameters import Parameter
 
 
 # class StokesModelData_5:
 class PDE:
-    def __init__(self,x0,x1,y0,y1, nu=1):
-        self.nu = 1
+    '''
+    \mu \Delta u - \nabla p + f = 0
+                 \nabla \cdot u = 0
+    '''
+    def __init__(self,x0,x1,y0,y1, nu):
         self.x0 = x0
         self.x1 = x1
         self.y0 = y0
         self.y1 = y1
+        self.nu = nu
 
     def domain(self):
         return [self.x0, self.x1, self.y0, self.y1]
-
-    # def init_mesh(self, n=1, meshtype='tri'):
-    #     node = np.array([
-    #         (0, 0),
-    #         (1, 0),
-    #         (1, 1),
-    #         (0, 1)], dtype=np.float)
-
-    #     if meshtype == 'tri':
-    #         cell = np.array([
-    #             (1, 2, 0),
-    #             (3, 0, 2)], dtype=np.int)
-    #         mesh = TriangleMesh(node, cell)
-    #         mesh.uniform_refine(n)
-    #         return mesh
-    #     elif meshtype == 'quad':
-    #         nx = 2
-    #         ny = 2
-    #         mesh = StructureQuadMesh(self.box, nx, ny)
-    #         mesh.uniform_refine(n)
-    #         return mesh
-    #     elif meshtype == 'poly':
-    #         cell = np.array([
-    #             (1, 2, 0),
-    #             (3, 0, 2)], dtype=np.int)
-    #         mesh = TriangleMesh(node, cell)
-    #         mesh.uniform_refine(n)
-    #         nmesh = TriangleMeshWithInfinityNode(mesh)
-    #         pnode, pcell, pcellLocation = nmesh.to_polygonmesh()
-    #         pmesh = PolygonMesh(pnode, pcell, pcellLocation)
-    #         return pmesh
 
     @cartesian
     def velocity(self, p):
@@ -114,24 +87,22 @@ class PDE:
     def dirichlet(self, p):
         return self.velocity(p)
 
-def GenerateMat(nx,ny,space_p = 2):
-    #=======================================
-    # adjustable config parameters
-    # space_p = 2 # must >= 2
+def GenerateMat(nx,ny, space_p = 2, nu=1):
+    # space_p must >= 2
+    assert space_p >= 2
 
     x0 = 0.0
     x1 = 1.0
     y0 = 0.0
     y1 = 1.0
-    #=======================================
     
-    pde = PDE(x0,x1,y0,y1)
+    pde = PDE(x0,x1,y0,y1,nu)
     domain = pde.domain()
-    mesh = MF.boxmesh2d(domain, nx=nx, ny=ny, meshtype='tri')
 
+    mesh = MF.boxmesh2d(domain, nx=nx, ny=ny, meshtype='tri')
     uspace = LagrangeFiniteElementSpace(mesh, p=space_p)
     pspace = LagrangeFiniteElementSpace(mesh, p=space_p-1)
-
+        
     ugdof = uspace.number_of_global_dofs()
     pgdof = pspace.number_of_global_dofs()
 
@@ -164,42 +135,37 @@ def GenerateMat(nx,ny,space_p = 2):
     AA = T@AA@T + Tbd
     FF[isBdDof] = x[isBdDof]
 
+    eps = 10**(-15)
+    AA.data[ np.abs(AA.data) < eps ] = 0
+    AA.eliminate_zeros()
     return AA
-    # ctx.set_centralized_sparse(AA)
-    # xx = FF.copy()
-    # ctx.set_rhs(xx)
-    # ctx.run(job=6)
-    # uh[:, 0] = xx[:ugdof]
-    # uh[:, 1] = xx[ugdof:2*ugdof]
-    # ph[:] = xx[2*ugdof:]
 
-    # NDof[i] =  gdof 
-    
-    # uc1 = pde.velocity(mesh.node)
-    # NN = mesh.number_of_nodes()
-    # uc2 = uh[:NN]
-    # up1 = pde.pressure(mesh.node)
-    # up2 = ph[:NN]
-    
-    # NDof[i] =  gdof 
-    # area = sum(mesh.entity_measure('cell'))
+class Para(Parameter):
+    def __init__(self):
+        super().__init__()
 
-    # iph = pspace.integralalg.integral(ph)/area
-    
-    # ph[:] = ph[:]-iph
- 
-    # errorMatrix[0, i] = uspace.integralalg.error(pde.velocity, uh)
-    # errorMatrix[1, i] = pspace.integralalg.error(pde.pressure, ph)
-    # #errorMatrix[0, i] = np.abs(uc1-uc2).max()
-    # #errorMatrix[1, i] = np.abs(up1-up2).max()
-    # if i < maxit-1:
-    #     mesh.uniform_refine()
-        
-    # ctx.destroy()
-    # print(errorMatrix)
-    # showmultirate(plt, 0, NDof, errorMatrix, errorType)
-    # plt.show()
+        self.DefineRandInt('space_p',2,4)
+
+        if self.para['space_p'] == 2:
+            self.DefineRandInt('nx', 30, 75)
+        elif self.para['space_p'] == 3:
+            self.DefineRandInt('nx', 20, 50)
+
+        self.CopyValue('nx', 'ny')
+
 
 if __name__ == '__main__':
-    a = GenerateMat(64,64)
+    print('mesh is tri, p=2')
+    a = GenerateMat(75,75,space_p=2)
+    print(a.shape,a.nnz)
+
+    a = GenerateMat(30,30,space_p=2)
+    print(a.shape,a.nnz)
+
+    print('mesh is tri, p=3')
+    a = GenerateMat(50,50,space_p=3)
+    print(a.shape,a.nnz)
+
+    a = GenerateMat(20,20,space_p=3)
+    print(a.shape,a.nnz)
 
