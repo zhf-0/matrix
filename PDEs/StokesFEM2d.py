@@ -114,10 +114,10 @@ class PDE:
     def dirichlet(self, p):
         return self.velocity(p)
 
-def GenerateMat(nx,ny):
+def GenerateMat(nx,ny,space_p = 2):
     #=======================================
     # adjustable config parameters
-    space_p = 2 # must >= 2
+    # space_p = 2 # must >= 2
 
     x0 = 0.0
     x1 = 1.0

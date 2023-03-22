@@ -5,6 +5,7 @@ from fealpy.functionspace import  ParametricLagrangeFiniteElementSpace
 from fealpy.boundarycondition import DirichletBC
 from fealpy.tools.show import showmultirate, show_error_table
 import numpy as np
+from .Parameters import Parameter
 
 class PDE:
     def __init__(self,x0,x1,y0,y1,blockx,blocky):
@@ -80,11 +81,10 @@ class PDE:
         shape = p.shape+(2,)
         val = np.zeros(shape,dtype=np.float64)
         val[...,0,0] = self.coef1[xidx,yidx]
-        # val[...,0,0] = 10.0
-        val[...,0,1] = 1.0
-        val[...,1,0] = 1.0
+        val[...,0,1] = 0.0
+
+        val[...,1,0] = 0.0
         val[...,1,1] = self.coef2[xidx,yidx]
-        # val[...,1,1] = 2.0
         return val
 
     @cartesian
@@ -123,30 +123,53 @@ def GenerateMat(nx,ny,blockx,blocky,meshtype='quad', space_p=1):
     bc = DirichletBC(space, pde.dirichlet)
     A, F = bc.apply(A, F, uh)
 
+    eps = 10**(-15)
+    A.data[ np.abs(A.data) < eps ] = 0
+    A.eliminate_zeros()
     return A
+
+class Para(Parameter):
+    def __init__(self):
+        super().__init__()
+
+        self.RandChoose('meshtype',['tri','quad'])
+        self.DefineRandInt('space_p',1,4)
+
+        if self.para['space_p'] == 1:
+            self.DefineRandInt('nx', 50, 200)
+            self.DefineRandInt('blockx',20,40)
+        elif self.para['space_p'] == 2:
+            self.DefineRandInt('nx', 50, 110)
+            self.DefineRandInt('blockx',20,40)
+        elif self.para['space_p'] == 3:
+            self.DefineRandInt('nx', 40, 70)
+            self.DefineRandInt('blockx',20,30)
+
+        self.CopyValue('nx', 'ny')
+        self.CopyValue('blockx', 'blocky')
 
 if __name__ == '__main__':
     print('mesh is quad, p=1')
-    a = GenerateMat(10,10,2,2)
+    a = GenerateMat(200,200,2,2)
     print(a.shape,a.nnz)
 
     print('mesh is quad, p=2')
-    a = GenerateMat(10,10,2,2,space_p=2)
+    a = GenerateMat(110,110,2,2,space_p=2)
     print(a.shape,a.nnz)
 
     print('mesh is quad, p=3')
-    a = GenerateMat(10,10,2,2,space_p=3)
+    a = GenerateMat(70,70,2,2,space_p=3)
     print(a.shape,a.nnz)
 
 
     print('mesh is tri, p=1')
-    a = GenerateMat(10,10,2,2,meshtype='tri')
+    a = GenerateMat(200,200,2,2,meshtype='tri')
     print(a.shape,a.nnz)
     
     print('mesh is tri, p=2')
-    a = GenerateMat(10,10,2,2,meshtype='tri',space_p=2)
+    a = GenerateMat(110,110,2,2,meshtype='tri',space_p=2)
     print(a.shape,a.nnz)
     
     print('mesh is tri, p=3')
-    a = GenerateMat(10,10,2,2,meshtype='tri',space_p=3)
+    a = GenerateMat(70,70,2,2,meshtype='tri',space_p=3)
     print(a.shape,a.nnz)

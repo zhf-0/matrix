@@ -93,15 +93,15 @@ class PDE:
         shape = p.shape+(3,)
         val = np.zeros(shape,dtype=np.float64)
         val[...,0,0] = self.coef1[xidx,yidx,zidx]
-        val[...,0,1] = 1.0
-        val[...,0,2] = 1.0
+        val[...,0,1] = 0.0
+        val[...,0,2] = 0.0
 
-        val[...,1,0] = 1.0
+        val[...,1,0] = 0.0
         val[...,1,1] = self.coef2[xidx,yidx,zidx]
-        val[...,1,2] = 1.0
+        val[...,1,2] = 0.0
 
-        val[...,2,0] = 1.0
-        val[...,2,1] = 1.0
+        val[...,2,0] = 0.0
+        val[...,2,1] = 0.0
         val[...,2,2] = self.coef3[xidx,yidx,zidx]
 
         return val
@@ -144,6 +144,9 @@ def GenerateMat(nx,ny,nz,blockx,blocky,blockz, meshtype='tet', space_p=1 ):
     bc = DirichletBC(space, pde.dirichlet)
     A, F = bc.apply(A, F, uh)
 
+    eps = 10**(-15)
+    A.data[ np.abs(A.data) < eps ] = 0
+    A.eliminate_zeros()
     return A
 
 if __name__ == '__main__':

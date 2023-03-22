@@ -17,39 +17,11 @@ from multiprocessing import Pool, current_process, Lock
 
 import PDEs.PoissonFEM2d as pde0
 import PDEs.ConvectionDiffusionReactionFEMwithDirichletBC2d as pde1
-
-class Parameter:
-    def __init__(self):
-        self.para = {}
-
-    def DefineRandInt(self,name,begin,end,num=1):
-        if num == 1:
-            self.para[name] = np.random.randint(begin,end)
-        else:
-            self.para[name] = np.random.randint(begin,end,num)
-
-    def DefineRandFloat(self,name,begin,end,num=1):
-        if num == 1:
-            self.para[name] = np.random.uniform(begin,end)
-        else:
-            self.para[name] = np.random.uniform(begin,end,num)
-    
-    def DefineFixPara(self,name,val):
-        self.para[name] = val
-
-    def CopyValue(self,name,name1):
-        self.para[name1] = self.para[name]
-        
-    def RandChoose(self,name,list_val):
-        idx = np.random.randint(0,len(list_val))
-        self.para[name] = list_val[idx]
-
-    def Register(self,info):
-        info.update(self.para)
-        return info
+import PDEs.LinearElasticityFEM2D as pde2
+import PDEs.FourthOrderEllipticDG2D as pde3
 
 class CreateData:
-    def __init__(self,num):
+    def __init__(self,num,num_cpu=8):
         self.num = num
         self.root_path = './MatData/'
         self.total_file = os.path.join(self.root_path,'total.json')
@@ -59,7 +31,7 @@ class CreateData:
 
         cpu_list = psutil.Process().cpu_affinity()
         print(f'original cpu list is {cpu_list}')
-        self.num_cpu = 2
+        self.num_cpu = num_cpu
         self.cpu_list = cpu_list[0:self.num_cpu]
         print(f'cpu list is {self.cpu_list}')
         
@@ -115,31 +87,30 @@ class CreateData:
         if not os.path.exists(scimat_path):
             if i < 1000:
                 info['PDE_type'] = 0
-                para = Parameter()
-                para.DefineRandInt('nx', 50, 300)
-                para.CopyValue('nx', 'ny')
-                para.DefineRandInt('blockx',20,40)
-                para.CopyValue('blockx', 'blocky')
-                para.RandChoose('meshtype',['tri','quad'])
-                para.DefineRandInt('space_p',1,4)
-
+                para = pde0.Para()
                 A = pde0.GenerateMat(**para.para)
                 info = para.Register(info)
             elif i>=1000 and i<2000:
                 info['PDE_type'] = 1
-                para = Parameter()
-                para.DefineRandInt('nx', 50, 300)
-                para.CopyValue('nx', 'ny')
-                para.DefineRandInt('blockx',20,40)
-                para.CopyValue('blockx', 'blocky')
-                para.RandChoose('meshtype',['tri','quad'])
-                para.DefineRandInt('space_p',1,4)
-
+                para = pde1.Para()
                 A = pde1.GenerateMat(**para.para)
+                info = para.Register(info)
+            elif i>=2000 and i<3000:
+                info['PDE_type'] = 2
+                para = pde2.Para()
+                A = pde2.GenerateMat(**para.para)
+                info = para.Register(info)
+            elif i>=3000 and i<4000:
+                info['PDE_type'] = 3
+                para = pde3.Para()
+                A = pde3.GenerateMat(**para.para)
                 info = para.Register(info)
 
             csr_A = csr_matrix(A)
             sparse.save_npz(scimat_path, csr_A)
+            info['num_row'] = csr_A.shape[0]
+            info['num_col'] = csr_A.shape[1]
+            info['nnz'] = csr_A.nnz
 
         batch_size = 3
         #begin = time.time()
@@ -282,7 +253,7 @@ def CallPetsc(arg_list):
         return (keyname,iter_num,reason,resi,b_norm,rlt_resi,elapsed_time)
 
 def main():
-    mat = CreateData(3)
+    mat = CreateData(4000,8)
     mat.Process()
 
 

@@ -18,12 +18,13 @@ def RunPetsc(petsc_A,petsc_b,ksp_name,pc_name):
     if pc_name == 'hypre':
         opts["pc_hypre_type"] = 'boomeramg'
 
-    opts["ksp_rtol"] = 1.0e-9 
+    opts["ksp_rtol"] = 1.0e-6 
     # opts["ksp_atol"] = 1e-10 
     opts["ksp_max_it"] = 1000 
-    opts["ksp_monitor_true_residual"] = None
+    # opts["ksp_monitor_true_residual"] = None
     # opts["ksp_view"] = None # List progress of solver
     # opts["no_signal_handler"] = None 
+    opts["ksp_norm_type"] = 'unpreconditioned'
 
     ksp = PETSc.KSP().create() 
     ksp.setOperators(petsc_A)
