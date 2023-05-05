@@ -84,12 +84,14 @@ batch_size = 3
 # where to store all json files that include the config and result infomation
 json_dir = './JsonFiles/' 
 
-# define the solver, `summary.json` is the file that includes statistic infomation
+# define the solver, 
+# `summary.json` is the file that includes statistic infomation
+# `num_cpu` is the number of task executed simultaneously, one task per cpu  
 solver = PetscSolvers.ParaSolveAndAnalysis(
          json_dir,
          batch_size,
          'summary.json',
-         num_cpu=2)
+         num_cpu=8)
 
 # solve the matrix with 28 iterative methods in PETSc
 # finish solving, the results and configs information are in  json_dir/result{idx}.json
