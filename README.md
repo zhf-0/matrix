@@ -1,6 +1,6 @@
 # Open Matrix Dataset Generator
 
-Generate dataset including matrices and labels for deep learning. 
+This is a sparse matrix generator which is backed by PDE model problems. It generates data sets including matrices and labels mainly for deep learning training purpopses. Apparently, it can be used to generate test problems for sparse linear solvers.
 
 The architecture of Open Matrix Dataset Generator (OMDG) is:
 
@@ -8,8 +8,8 @@ The architecture of Open Matrix Dataset Generator (OMDG) is:
 
 OMDG can generate matrices from different programs and solve the corresponding linear equations with different iterative methods simultaneously. Other features include:
 
-- Multi-task parallel
-- Breakpoint resume
+- Multi-tasking
+- Breakpoint and resume
 - Customized labeling method
 - Reproduce matrices and right hand vectors from existed configuration file
 - Support discretization programs and solvers that written by different languages (C/C++, python, etc. )
@@ -22,7 +22,7 @@ OMDG can generate matrices from different programs and solve the corresponding l
 
 # Installation
 
-- `git clone ...` or download the tar file
+- `git clone git@github.com:OpenCAXPlus/OMDG.git` or download the tar file directly
 - Optional:
   - `FEALPY`: discretization software, [installation](https://github.com/weihuayi/fealpy) 
   - `petsc4py`: solver, [installation](https://www.mcs.anl.gov/petsc/petsc4py-current/docs/usrman/install.html)
@@ -40,15 +40,15 @@ import PDEs.PoissonFEM2d as pde1
 # index of the matrix
 idx = 1
 
-# the format of output matrix, SciCSR: scipy.sparse.csr_matrix(default) 
-#                              SciCOO: scipy.sparse.coo_matrix 
-#                              COO: coo in txt format
+# the type of output matrix, SciCSR: scipy.sparse.csr_matrix(default) 
+#                            SciCOO: scipy.sparse.coo_matrix 
+#                            COO: coo in txt format
 mat_type = 'SciCSR'
 
-# matrix name, the name can not be choose randomly
-# if the format is 'SciCSR', the the name is 'scipy_csr{index}.npz'
-# if the format is 'SciCOO', the the name is 'scipy_coo{index}.npz'
-# if the format is 'COO', the the name is 'coo{index}.npz'
+# matrix type, the name has to be choosen from the following list:
+# if the format is 'SciCSR', the name is 'scipy_csr{index}.npz'
+# if the format is 'SciCOO', the name is 'scipy_coo{index}.npz'
+# if the format is 'COO', the name is 'coo{index}.npz'
 mat_path = f'scipy_csr{idx}.npz'
 
 # don't need to output the right hand side vector 
