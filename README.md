@@ -4,7 +4,7 @@ Generate dataset including matrices and labels for deep learning.
 
 The architecture of Open Matrix Dataset Generator (OMDG) is:
 
-![image](https://github.com/zhf-0/matrix/blob/main/doc/pic/arch.png)
+![image](./doc/pic/arch.png)
 
 OMDG can generate matrices from different programs and solve the corresponding linear equations with different iterative methods simultaneously. Other features include:
 
