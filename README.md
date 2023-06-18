@@ -12,10 +12,10 @@ OMDG can generate matrices from different programs and solve the corresponding l
 - Breakpoint and resume
 - Customized labeling method
 - Reproduce matrices and right hand vectors from existed configuration file
-- Support discretization programs and solvers that written by different languages (C/C++, python, etc. )
+- Support discretization programs and solvers that written by different languages (`C/C++`, `python`, etc. )
 - Provide query and download interfaces for SuiteSparse Matrix Collection
 
-**Those features are verified in PC and cluster**. However, the shortcomings of OMDG are:
+**Above features are verified in PC and cluster**. However, the shortcomings of OMDG are:
 
 - The discretization programs and solvers can be written by `MPI`, but can only be executed sequentially, which means can not be executed by `mpirun ...` 
 - There will be memory/cache competition if too many tasks running simultaneously, and  increase the wall time
@@ -45,7 +45,7 @@ idx = 1
 #                            COO: coo in txt format
 mat_type = 'SciCSR'
 
-# matrix type, the name has to be choosen from the following list:
+# matrix name, the name has to be choosen from the following list:
 # if the format is 'SciCSR', the name is 'scipy_csr{index}.npz'
 # if the format is 'SciCOO', the name is 'scipy_coo{index}.npz'
 # if the format is 'COO', the name is 'coo{index}.npz'
