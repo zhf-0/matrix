@@ -6,7 +6,7 @@ version=${1}
 external_id=${2}
 
 # prepare necessary variables
-url="https://github.com/zhf-0/matrix/archive/refs/heads/main.zip"
+url="https://github.com/zhf-0/matrix/archive/refs/tags/$version.tar.gz"
 dir="ocp/external/$external_id/$version/source"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 gz_file="$external_id-v$version.tar.gz"
