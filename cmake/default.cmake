@@ -1,0 +1,2 @@
+message(STATUS "You should put necessary cmake commands to prepare the external project's target")
+message(STATUS "We will provide a variable of name exteral_VERSION, and you should prepare a variable called external_target")
