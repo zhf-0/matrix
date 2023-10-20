@@ -3,7 +3,7 @@
 # The source code must be in ocp/external/external_id/version/source folder
 # get command line arguments
 version=${1}
-external_id=${2}
+external_id=${2:-omdg}
 
 # prepare necessary variables
 url="https://github.com/zhf-0/matrix/archive/refs/tags/$version.tar.gz"
