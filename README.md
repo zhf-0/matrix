@@ -1,28 +1,27 @@
-# Open Matrix Dataset Generator
+# OpenMat
 
 This is a sparse matrix generator which is backed by PDE model problems. It generates data sets including matrices and labels mainly for deep learning training purpopses. Apparently, it can be used to generate test problems for sparse linear solvers.
 
-The architecture of Open Matrix Dataset Generator (OMDG) is:
+The architecture of OpenMat is:
 
 ![image](./doc/pic/arch.png)
 
-OMDG can generate matrices from different programs and solve the corresponding linear equations with different iterative methods simultaneously. Other features include:
+OpenMat can generate matrices from different programs and solve the corresponding linear equations with different iterative methods simultaneously. Other features include:
 
 - Multi-tasking
 - Breakpoint and resume
-- Customized labeling method
+-  Label computation
 - Reproduce matrices and right hand vectors from existed configuration file
 - Support discretization programs and solvers that written by different languages (`C/C++`, `python`, etc. )
 - Provide query and download interfaces for SuiteSparse Matrix Collection
 
-**Above features are verified in PC and cluster**. However, the shortcomings of OMDG are:
+**Above features are verified in PC and cluster**. 
 
-- The discretization programs and solvers can be written by `MPI`, but can only be executed sequentially, which means can not be executed by `mpirun ...` 
-- There will be memory/cache competition if too many tasks running simultaneously, and  increase the wall time
+
 
 # Installation
 
-- `git clone git@github.com:OpenCAXPlus/OMDG.git` or download the tar file directly
+- `git clone git@github.com:zhf-0/matrix.git` or download the tar file directly
 - Optional:
   - `FEALPY`: discretization software, [installation](https://github.com/weihuayi/fealpy) 
   - `petsc4py`: solver, [installation](https://www.mcs.anl.gov/petsc/petsc4py-current/docs/usrman/install.html)
@@ -35,8 +34,6 @@ Using the matrix from Poisson equation as the example.
 - First step is generating 
 
 ```python
-import PDEs.PoissonFEM2d as pde1
-
 # index of the matrix
 idx = 1
 
@@ -76,25 +73,11 @@ parameter.others['nnz'] = nnz
 - Second step is solving
 
 ```python
-import PetscSolvers
-
 # each iterative method will solve 3 times for average
 batch_size = 3 
 
 # where to store all json files that include the config and result infomation
 json_dir = './JsonFiles/' 
 
-# define the solver, 
-# `summary.json` is the file that includes statistic infomation
-# `num_cpu` is the number of task executed simultaneously, one task per cpu  
-solver = PetscSolvers.ParaSolveAndAnalysis(
-         json_dir,
-         batch_size,
-         'summary.json',
-         num_cpu=8)
-
-# solve the matrix with 28 iterative methods in PETSc
-# finish solving, the results and configs information are in  json_dir/result{idx}.json
-solver.Process(idx,mat_path,parameter,need_rhs)
 ```
 

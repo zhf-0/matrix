@@ -83,25 +83,35 @@ def WriteMatAndVec(A,F,mat_type,mat_path,need_rhs):
         elif mat_type =='COO': 
             WriteCOO2TXT(mat_path, A)
         else:
-            print('the matrix type is wrong')
-            sys.exit()
-            
-        if F is not None and need_rhs:
-            mat_dir = os.path.dirname(mat_path)
-            mat_name = os.path.basename(mat_path)
-            if mat_type in ('SciCSR', 'SciCOO'):  
-                idx_str = mat_name[9:-4]
-                rhs_name = f'rhs{idx_str}.npy'
-                rhs_path = os.path.join(mat_dir,rhs_name)
-                np.save(rhs_path, F)
-            elif mat_type == 'COO':
-                idx_str = mat_name[3:-4]
-                rhs_name = f'rhs{idx_str}.txt'
-                rhs_path = os.path.join(mat_dir,rhs_name)
-                WriteVec2TXT(rhs_path, F)
+            raise Exception("the matrix type is wrong")           
+    elif isinstance(A,sparse.csr.csr_matrix):
+        if mat_type is None:
+            pass
+        elif mat_type == 'SciCSR':
+            sparse.save_npz(mat_path, A)
+        elif mat_type =='SciCOO': 
+            coo_A = coo_matrix(A)
+            sparse.save_npz(mat_path,coo_A)
+        elif mat_type =='COO': 
+            WriteCOO2TXT(mat_path, A.tocoo())
+        else:
+            raise Exception("the matrix type is wrong")           
     else:
-        print('the type of matrix A is not scipy.sparse.coo.coo_matrix')
-        sys.exit()
+        raise Exception("the type of input matrix A is not scipy.sparse")           
+
+    if F is not None and need_rhs:
+        mat_dir = os.path.dirname(mat_path)
+        mat_name = os.path.basename(mat_path)
+        if mat_type in ('SciCSR', 'SciCOO'):  
+            idx_str = mat_name[9:-4]
+            rhs_name = f'rhs{idx_str}.npy'
+            rhs_path = os.path.join(mat_dir,rhs_name)
+            np.save(rhs_path, F)
+        elif mat_type == 'COO':
+            idx_str = mat_name[3:-4]
+            rhs_name = f'rhs{idx_str}.txt'
+            rhs_path = os.path.join(mat_dir,rhs_name)
+            WriteVec2TXT(rhs_path, F)
 
 if __name__ == '__main__':
     a = np.array([1.0,2.0,3.0,4.0])

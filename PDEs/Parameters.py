@@ -3,7 +3,7 @@ import numpy as np
 class Parameter:
     def __init__(self):
         self.para = {}
-        self.others = {}
+        # self.mat_info = {}
 
         self.AddParas()
 
