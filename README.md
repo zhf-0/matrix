@@ -80,28 +80,32 @@ para.DefineFixPara('need_rhs',need_rhs)
 # create a json file that save all parameters of the generation
 json_path = os.path.join(json_dir,f'result{i}.json')
 json_result = {}
+
 #the index of poisson problem is 1 in OpenMat
 json_result['PDE_idx'] = 1 
+
 # parameter.para is the dict that includes all values of the parameter 
 # copy all paremeters to the json file
 json_result['GenMat'] = para.para
+
 # save json file 
 with open(json_path,'w',encoding='utf-8') as f:
-	json.dump(json_result,f,indent=4)
+    json.dump(json_result,f,indent=4)
 
 # create the command with command line parameters
+# such as `line = --nx 10, --ny 10 --mat_type tri ...`
 line = ' '
 for k,v in para.para.items():
-	line = line + f' --{k} {v} '     
-# such as `line = --nx 10, --ny 10 --mat_type tri ...`
+    line = line + f' --{k} {v} '     
 one_command = 'python ./PDEs/poisson_lfem_mixedbc_2d.py' + line + '\n'
+
 # add the command into the list 
 contents.append(one_command)
 
 # the codes above only concern about one matrix
 # if the commands for all matrices is generated, then save them to file
 with open(script_path,'w',encoding='utf-8') as f:
-	f.writelines(header)
+    f.writelines(header)
     f.writelines(contents)
     f.writelines(footer)
 ```
