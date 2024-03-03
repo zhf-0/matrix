@@ -129,6 +129,9 @@ dmypy.json
 .pyre/
 
 # personal 
+*.json
+*.yaml
 JsonFiles/
 MatData/
+PetscMat/
 *.sh*
