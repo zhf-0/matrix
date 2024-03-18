@@ -505,57 +505,7 @@ class ParTaskParRunDesktop(ParTaskParRunCluster):
 #                 f.writelines(footer)
 
 
-def TestMat1():
-    indptr = np.array([0, 2, 3, 6]) # row vec
-    indices = np.array([0, 2, 2, 0, 1, 2]) # col vec
-    data = np.array([1, 2, 3, 4, 5, 6]) # val vec
-    csr_A = csr_matrix((data, indices, indptr), shape=(3, 3))
-    out_file = 'petsc.dat'
 
-
-    petsc_A = PETSc.Mat().createAIJ(size=csr_A.shape, csr=(csr_A.indptr, csr_A.indices, csr_A.data))
-
-    b = np.ones(csr_A.shape[0])
-    petsc_b = PETSc.Vec().createSeq(len(b)) 
-    petsc_b.setValues(range(len(b)), b) 
-
-    viewer = PETSc.Viewer().createBinary(out_file, 'w')
-    viewer(petsc_A)
-    viewer(petsc_b)
-
-def TestMat2():
-    csr_A = load_npz('./csrA.npz')
-    out_file = 'petsc.dat'
-
-    petsc_A = PETSc.Mat().createAIJ(size=csr_A.shape, csr=(csr_A.indptr, csr_A.indices, csr_A.data))
-
-    b = np.ones(csr_A.shape[0])
-    petsc_b = PETSc.Vec().createSeq(len(b)) 
-    petsc_b.setValues(range(len(b)), b) 
-
-    viewer = PETSc.Viewer().createBinary(out_file, 'w')
-    viewer(petsc_A)
-    viewer(petsc_b)
-
-
-def TestMat3():
-    #csr_A = load_npz('../test1/Mat/csr1175.npz')
-    #out_file = './PetscMat/petsc1175.mat'
-
-    csr_A = load_npz('../test1/Mat/csr1068.npz')
-    out_file = './PetscMat/petsc1068.mat'
-
-    print('generate matrix:',out_file)
-
-    petsc_A = PETSc.Mat().createAIJ(size=csr_A.shape, csr=(csr_A.indptr, csr_A.indices, csr_A.data))
-
-    b = np.ones(csr_A.shape[0])
-    petsc_b = PETSc.Vec().createSeq(len(b))
-    petsc_b.setValues(range(len(b)), b)
-
-    viewer = PETSc.Viewer().createBinary(out_file, 'w')
-    viewer(petsc_A)
-    viewer(petsc_b)
 
 def TestSeqTaskParRun():
     import re
