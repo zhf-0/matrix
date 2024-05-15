@@ -24,6 +24,10 @@ Based on `FEALPY`, `OpenMat` can generate matrices with different sizes and prop
   - Matrix generation: install `FEALPY` ([installation](https://github.com/weihuayi/fealpy)) and `ssgetpy` (download matrices from SuiteSpare Matrix Collection,  [installation](https://github.com/drdarshan/ssgetpy))
   - Label computation: install `petsc` and `petsc4py` ([offical PETSc doc](https://petsc.org/release/install/install_tutorial/#configuration))
 
+
+
+**Note that: `OpenMat` can be used in cluster and desktop envirorments. For now, when it is used in the desktop, the `mpi` must be `openmpi` because of the processes binding** 
+
 # Usage
 
 ## Matrix Generation

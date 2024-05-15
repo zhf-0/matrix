@@ -10,13 +10,6 @@ import helmholtz_robinbc_2d as pde3
 import linear_elasticity_lfem_2d as pde4
 import maxwell_nedelec_3d as pde5
 
-# import PDEs.SuiteSparse as pde0
-# import PDEs.poisson_lfem_mixedbc_2d as pde1
-# import PDEs.diffusion_convection_reaction_lfem_mixedbc_2d as pde2
-# import PDEs.helmholtz_robinbc_2d as pde3
-# import PDEs.linear_elasticity_lfem_2d as pde4
-# import PDEs.maxwell_nedelec_3d as pde5
-
 def GenerateScript(script_path, header, footer):
     json_dir = './JsonFiles/'
     os.makedirs(json_dir,exist_ok=True)

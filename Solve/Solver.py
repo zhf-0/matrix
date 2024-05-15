@@ -81,6 +81,9 @@ class SeqTaskParRun:
                     repeat = self.batch_size
                 else:
                     counts = len(json_result['Solve'][keyname]['time'])
+                    if counts > self.batch_size:
+                        raise ValueError(f'the count is larger than batch size, {keyname}, {yaml_file}')
+
                     repeat = self.batch_size - counts
 
                 for _ in range(repeat):
@@ -90,7 +93,7 @@ class SeqTaskParRun:
                 if repeat == 0:
                     json_result['Solve'][keyname]['avg_time'] = sum(json_result['Solve'][keyname]['time']) / self.batch_size
 
-            json_result['finished'] = finished
+            json_result['Solve']['finished'] = finished
 
             with open(yaml_file,'w',encoding='utf-8') as f:
                 yaml.dump_all(yaml_result,f)
@@ -150,16 +153,16 @@ class SeqTaskParRun:
                     with open(json_file,'r',encoding='utf-8') as f:
                         json_result = json.load(f)
                         
-                    if 'finished' not in json_result:
-                        json_result['finished'] = False
-
                     if 'Solve' not in json_result:
                         json_result['Solve'] = {}
 
+                    if 'finished' not in json_result:
+                        json_result['Solve']['finished'] = False
+
                 else:
                     json_result = {}
-                    json_result['finished'] = False
                     json_result['Solve'] = {}
+                    json_result['Solve']['finished'] = False
 
                 mat_file = os.path.join(self.mat_dir,f'petsc{idx}.mat')
                 if not os.path.exists(mat_file):
@@ -176,7 +179,7 @@ class SeqTaskParRun:
                 yaml_file = os.path.join(self.yaml_dir,f'result{idx}.yaml') 
                 self.DealYamlFile(json_result,mat_file,yaml_file)
 
-                if json_result['finished']:
+                if json_result['Solve']['finished']:
                     print(f'finished solving matrix {idx}')
                     self.DataAnalysis(json_result,idx)
 
@@ -267,7 +270,7 @@ class ParTaskParRunCluster(SeqTaskParRun):
                 if repeat == 0:
                     json_result['Solve'][keyname]['avg_time'] = sum(json_result['Solve'][keyname]['time']) / self.batch_size
 
-            json_result['finished'] = finished
+            json_result['Solve']['finished'] = finished
         else:
             for keyname in self.ksp_pc:
                 ksp_name, pc_name = keyname.split('-')
