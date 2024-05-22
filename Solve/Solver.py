@@ -173,9 +173,6 @@ class SeqTaskParRun:
                     self.ChangeMatFormat(mat_file,in_mat_file,in_vec_file)
                     # self.ChangeMatFormat(mat_file,in_mat_file)
 
-                    json_result['GenMat'] = {}
-                    json_result['GenMat']['num_para'] = 0
-
                 yaml_file = os.path.join(self.yaml_dir,f'result{idx}.yaml') 
                 self.DealYamlFile(json_result,mat_file,yaml_file)
 
@@ -337,6 +334,9 @@ def LoadBalance(num, n):
 
 
 class ParTaskParRunDesktop(ParTaskParRunCluster):
+    '''
+    Compared to the Cluster version, the Desktop version needs bind process to core
+    '''
     def __init__(self,json_dir,yaml_dir,mat_dir,batch_size,idx_list,num_task,cpu_list):
         super().__init__(json_dir,yaml_dir,mat_dir,batch_size,idx_list,num_task)
         self.cpu_list = cpu_list
@@ -391,123 +391,6 @@ class ParTaskParRunDesktop(ParTaskParRunCluster):
                 f.writelines(contents[k])
                 f.writelines(footer)
                 
-
-# class ParTaskParRun(SeqTaskParRun):
-#     def __init__(self,json_dir,yaml_dir,mat_dir,batch_size,idx_list,cpu_list,num_task):
-#         super().__init__(json_dir,yaml_dir,mat_dir,batch_size,idx_list)
-#         self.cpu_list = cpu_list
-#         self.num_task = num_task
-#         num_cpu_per_task = len(self.cpu_list) // self.num_task
-#         self.cpu_per_task = []
-#         for i in range(self.num_task):
-#             begin = i * num_cpu_per_task
-#             end = (i + 1) * num_cpu_per_task
-#             s = ' '
-#             for item in self.cpu_list[begin:end-1]:
-#                 s += f'{item},'
-
-#             s += f'{self.cpu_list[end-1]} '
-#             self.cpu_per_task.append( s )
-#             # self.cpu_per_task.append( self.cpu_list[begin:end] )
-
-#     def DealYamlFile(self,json_result,mat_file,yaml_file):
-#         any_yaml_file_exist = False
-#         for k in range(self.num_task): 
-#             tmp_name = yaml_file + f'{k}'
-
-#             if os.path.exists(tmp_name):
-#                 any_yaml_file_exist = True
-#                 print('read yaml file')
-
-#                 with open(tmp_name,'r',encoding='utf-8') as f:
-#                     tmp = yaml.load_all(f,Loader=yaml.FullLoader)
-#                     yaml_result = list(tmp)
-
-#                 for item in yaml_result:
-#                     keyname = item['ksp_pc']
-
-#                     if keyname not in json_result['Solve']:
-#                         json_result['Solve'][keyname] = {}
-#                         json_result['Solve'][keyname]['iter'] = item['iter']
-#                         json_result['Solve'][keyname]['stop_reason'] = item['stop_reason']
-#                         json_result['Solve'][keyname]['r_norm'] = item['r_norm']
-#                         json_result['Solve'][keyname]['b_norm'] = item['b_norm']
-#                         json_result['Solve'][keyname]['relative_norm'] = item['relative_norm']
-
-#                         json_result['Solve'][keyname]['time'] = []
-#                         json_result['Solve'][keyname]['time'].append( item['time'] )
-#                     elif item['processed'] == 0:
-#                         json_result['Solve'][keyname]['time'].append( item['time'] )
-
-#                     item['processed'] = 1
-
-#                 with open(tmp_name,'w',encoding='utf-8') as f:
-#                     yaml.dump_all(yaml_result,f)
-
-#         if any_yaml_file_exist:
-#             finished = True
-#             for keyname in self.ksp_pc:
-#                 ksp_name, pc_name = keyname.split('-')
-#                 if keyname not in json_result['Solve']:
-#                     repeat = self.batch_size
-#                 else:
-#                     counts = len(json_result['Solve'][keyname]['time'])
-#                     repeat = self.batch_size - counts
-
-#                 for _ in range(repeat):
-#                     self.paras.append( [ksp_name,pc_name,mat_file,yaml_file] )
-#                     finished = False
-
-#                 if repeat == 0:
-#                     json_result['Solve'][keyname]['avg_time'] = sum(json_result['Solve'][keyname]['time']) / self.batch_size
-
-#             json_result['finished'] = finished
-#         else:
-#             for keyname in self.ksp_pc:
-#                 ksp_name, pc_name = keyname.split('-')
-#                 for _ in range(self.batch_size):
-#                     self.paras.append( [ksp_name,pc_name,mat_file,yaml_file] )
-
-
-#     def GenerateScript(self,file_name,header,footer,command):
-#         contents = [ [] for i in range(self.num_task)]
-
-#         if len(self.paras) == 0:
-#             print('Finished all computation')
-#         else:
-#             num_run = len(self.paras)
-#             count_list = LoadBalance(num_run,self.num_task)
-
-#             for i in range(self.num_task):
-#                 begin = count_list[i]
-#                 end = count_list[i+1]
-#                 for item in self.paras[begin:end]:
-#                     yaml_file = item[3] + f'{i}'
-#                     one_command = command.format(self.cpu_per_task[i], item[0],item[1],item[2],yaml_file)
-
-#                     keyname = f'{item[0]}-{item[1]}'
-#                     contents[i].append(one_command)
-
-#                     contents[i].append('if [ $? != 0 ]; then \n')
-#                     contents[i].append(f'echo --- >> {yaml_file} \n')
-#                     contents[i].append(f'echo ksp_pc: {keyname} >> {yaml_file} \n')
-#                     contents[i].append(f'echo iter: 100000 >> {yaml_file} \n')
-#                     contents[i].append(f'echo stop_reason: -100 >> {yaml_file} \n')
-#                     contents[i].append(f'echo r_norm: 0.0 >> {yaml_file} \n')
-#                     contents[i].append(f'echo b_norm: 0.0 >> {yaml_file} \n')
-#                     contents[i].append(f'echo relative_norm: 0.0 >> {yaml_file} \n')
-#                     contents[i].append(f'echo time: 100000.0 >> {yaml_file} \n')
-#                     contents[i].append(f'echo processed: 0 >> {yaml_file} \n')
-#                     contents[i].append('fi \n')
-
-#         for k in range(self.num_task):
-#             real_name = file_name + f'{k}'
-#             with open(real_name,'w',encoding='utf-8') as f:
-#                 f.writelines(header)
-#                 f.writelines(contents[k])
-#                 f.writelines(footer)
-
-
 
 
 def TestSeqTaskParRun():

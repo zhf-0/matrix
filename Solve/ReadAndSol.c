@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 		PetscFOpen(PETSC_COMM_SELF, yaml_file, "a", &fp);
 
 		PetscFPrintf(PETSC_COMM_SELF, fp, "--- \n");
-		PetscFPrintf(PETSC_COMM_SELF, fp, "ksp_pc: %s-%s \n",ksp_name,pc_name);
+		PetscFPrintf(PETSC_COMM_SELF, fp, "SolveLabel: %s-%s \n",ksp_name,pc_name);
 		PetscFPrintf(PETSC_COMM_SELF, fp, "iter: %d \n",its);
 		PetscFPrintf(PETSC_COMM_SELF, fp, "stop_reason: %d \n",reason);
 		PetscFPrintf(PETSC_COMM_SELF, fp, "r_norm: %e \n",res0);
