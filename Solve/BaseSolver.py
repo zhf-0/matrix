@@ -414,6 +414,11 @@ class MultiTaskGenWithYamlJson(SingleTaskGenWithYamlJson):
     def ProcessOneProblem(self,idx,one_outer_para,json_result):
         yaml_file = one_outer_para[-1]
 
+        if self.permutation is not None:
+            num_all_para = len(self.inner_para_list[0]) + len(one_outer_para)
+            assert len(self.permutation) == num_all_para 
+            tmp_list = [None] * num_all_para
+
         any_yaml_file_exist = False
         for k in range(self.num_task): 
             tmp_name = yaml_file + f'{k}'
@@ -578,6 +583,23 @@ def TestTaskGenPermutation():
     footer = ['echo finished !! \n']
     a.GenerateScript(script_file,header,footer,command)
 
+def TestTaskGenMultiTask():
+    label_list = ['a','b','c','d']
+    inner_para_list = [[0,2],[0,3],[1,2],[1,3]]
+    idx_list = [0,4,8]
+    outer_para_list = [['mat0.txt','vec0.txt','output0.txt'],['mat4.txt','vec4.txt','output4.txt'],['mat8.txt','vec8.txt','output8.txt']]
+
+    command = './run -pa {} -pb {} -mat_file {} -vec_file {} -out_file {} \n'
+
+
+    a = TaskGen(label_list,inner_para_list)
+    a.Process(idx_list,outer_para_list)
+
+    script_file = 'run.sh'
+    header = ['#!/bin/bash \n']
+    footer = ['echo finished !! \n']
+    a.GenerateScript(script_file,header,footer,command,2)
+
 def TestSingleTaskGen():
     label_list = ['a','b','c','d']
     inner_para_list = [[0,2],[0,3],[1,2],[1,3]]
@@ -614,9 +636,50 @@ def TestSingleTaskGenPermutation():
     a.GenerateScript(script_file,header,footer,command)
 
 
+def TestMultiTaskGen():
+    num_task = 2
+    label_list = ['a','b','c','d']
+    inner_para_list = [[0,2],[0,3],[1,2],[1,3]]
+    idx_list = [0,4,8]
+    outer_para_list = [['mat0.txt','vec0.txt','result0.yaml'],['mat4.txt','vec4.txt','result4.yaml'],['mat8.txt','vec8.txt','result8.yaml']]
+    metric_list = ['time','iter','resi']
+
+    command = './run -pa {} -pb {} -mat_file {} -vec_file {} -out_file {} \n'
+
+    a = MultiTaskGenWithYamlJson(num_task,metric_list,label_list,inner_para_list)
+    a.Process(idx_list,outer_para_list)
+
+    script_file = 'run.sh'
+    header = ['#!/bin/bash \n']
+    footer = ['echo finished !! \n']
+    a.GenerateScript(script_file,header,footer,command)
+
+def TestMultiTaskGenPermutation():
+    permutation = [1,3,0,2,4]
+    num_task = 2
+    label_list = ['a','b','c','d']
+    inner_para_list = [[0,2],[0,3],[1,2],[1,3]]
+    idx_list = [0,4,8]
+    outer_para_list = [['mat0.txt','vec0.txt','result0.yaml'],['mat4.txt','vec4.txt','result4.yaml'],['mat8.txt','vec8.txt','result8.yaml']]
+    metric_list = ['time','iter','resi']
+
+    command = './run -pa {} -pb {} -mat_file {} -vec_file {} -out_file {} \n'
+
+    a = MultiTaskGenWithYamlJson(num_task,metric_list,label_list,inner_para_list,permutation=permutation)
+    a.Process(idx_list,outer_para_list)
+
+    script_file = 'run.sh'
+    header = ['#!/bin/bash \n']
+    footer = ['echo finished !! \n']
+    a.GenerateScript(script_file,header,footer,command)
+
 if __name__ == '__main__':
     # TestTaskGen()
     # TestTaskGenPermutation()
+    # TestTaskGenMultiTask()
 
     # TestSingleTaskGen()
-    TestSingleTaskGenPermutation()
+    # TestSingleTaskGenPermutation()
+    
+    # TestMultiTaskGen()
+    TestMultiTaskGenPermutation()
