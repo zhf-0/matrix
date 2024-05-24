@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     ierr = KSPSetType(ksp, KSPGMRES);CHKERRQ(ierr);
     ierr = KSPGetPC(ksp,&pc);CHKERRQ(ierr);
     ierr = PCSetType(pc,PCNONE);CHKERRQ(ierr);
-    ierr = KSPSetTolerances(ksp,1.e-6,PETSC_DEFAULT,PETSC_DEFAULT,1000);CHKERRQ(ierr);
+    ierr = KSPSetTolerances(ksp,1.e-3,PETSC_DEFAULT,PETSC_DEFAULT,1000);CHKERRQ(ierr);
     ierr = KSPSetNormType(ksp,KSP_NORM_UNPRECONDITIONED);CHKERRQ(ierr);
     ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
 
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 		PetscFOpen(PETSC_COMM_SELF, yaml_file, "a", &fp);
 
 		PetscFPrintf(PETSC_COMM_SELF, fp, "--- \n");
-		PetscFPrintf(PETSC_COMM_SELF, fp, "solve_label: %s-%s \n",ksp_name,pc_name);
+		PetscFPrintf(PETSC_COMM_SELF, fp, "solve_label: %s \n",solve_label);
 		PetscFPrintf(PETSC_COMM_SELF, fp, "iter: %d \n",its);
 		PetscFPrintf(PETSC_COMM_SELF, fp, "stop_reason: %d \n",reason);
 		PetscFPrintf(PETSC_COMM_SELF, fp, "r_norm: %e \n",res0);
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 
 
 		ierr = PetscPrintf(PETSC_COMM_SELF,"================================= \n");CHKERRQ(ierr);
-		ierr = PetscPrintf(PETSC_COMM_SELF,"process matrix %s using %s-%s \n",mat_file,ksp_name,pc_name);CHKERRQ(ierr);
+		ierr = PetscPrintf(PETSC_COMM_SELF,"process matrix %s using %s \n",mat_file,solve_label);CHKERRQ(ierr);
 		ierr = PetscPrintf(PETSC_COMM_SELF,"iteration_num = %d \n",its);CHKERRQ(ierr);
 		ierr = PetscPrintf(PETSC_COMM_SELF,"converge_reason = %d \n",reason);CHKERRQ(ierr);
 		ierr = PetscPrintf(PETSC_COMM_SELF,"residula_norm = %e \n",res0);CHKERRQ(ierr);

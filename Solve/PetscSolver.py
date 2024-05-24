@@ -148,7 +148,10 @@ class MultiTask4PetscInDesktop(BaseSolver.MultiTaskGenWithYamlJson):
                 viewer(petsc_b)
 
     def DataAnalysis(self,idx_list):
-        pass
+        for idx in idx_list:
+            json_file = os.path.join(self.json_dir,f'result{idx}.json')
+            with open(json_file,'r',encoding='utf-8') as f:
+                json_result = json.load(f)
 
     def GenerateScript(self,file_name,header,footer,command):
         contents = [ [] for i in range(self.num_task)]
