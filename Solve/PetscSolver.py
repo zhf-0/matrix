@@ -221,21 +221,21 @@ def TestMultiTask():
     os.makedirs(formated_mat_dir,exist_ok=True)
     out_template = 'petsc{}.dat'
     out_list = []
-    for i in idx_list:
-        mat_path = os.path.join(mat_dir,mat_template.format(i))
+    for i,idx in enumerate(idx_list):
+        mat_path = os.path.join(mat_dir,mat_template.format(idx))
         mat_list.append(mat_path)
         
-        vec_path = os.path.join(mat_dir,vec_template.format(i)) 
+        vec_path = os.path.join(mat_dir,vec_template.format(idx)) 
         vec_list.append(vec_path)
 
         # placeholder
         outer_para_list[i].append(' ')
 
-        formated_mat_path = os.path.join(formated_mat_dir,out_template.format(i))
+        formated_mat_path = os.path.join(formated_mat_dir,out_template.format(idx))
         outer_para_list[i].append(formated_mat_path)
         out_list.append(formated_mat_path)
 
-        yaml_path = os.path.join(yaml_dir,yaml_template.format(i))
+        yaml_path = os.path.join(yaml_dir,yaml_template.format(idx))
         outer_para_list[i].append(yaml_path)
 
 
