@@ -210,7 +210,7 @@ class SingleTaskGenWithYamlJson(TaskGen):
                   path or relative path
         
         WARNING: the inner_para_list must include the label of the parameter combination. The label
-                 is used in the output of the solving program with the name 'SolveLabel' to 
+                 is used in the output of the solving program with the name 'solve_label' to 
                  determine the belonging of the solving results.
 
         # formated_mat_dir: the dir that store the format-transformed matrices and vectors
@@ -266,7 +266,7 @@ class SingleTaskGenWithYamlJson(TaskGen):
                 yaml_result = list(tmp)
 
             for item in yaml_result:
-                label = item['SolveLabel']
+                label = item['solve_label']
 
                 if label not in json_result['Solve']:
                     json_result['Solve'][label] = {}
@@ -396,7 +396,7 @@ class SingleTaskGenWithYamlJson(TaskGen):
             contents.append(one_command)
             contents.append('if [ $? != 0 ]; then \n')
             contents.append(f'echo --- >> {yaml_file} \n')
-            contents.append(f'echo SolveLabel: {label} >> {yaml_file} \n')
+            contents.append(f'echo solve_label: {label} >> {yaml_file} \n')
             for metric in self.metric_list:
                 contents.append(f'echo {metric}: 0 >> {yaml_file} \n')
             contents.append('fi \n')
@@ -432,7 +432,7 @@ class MultiTaskGenWithYamlJson(SingleTaskGenWithYamlJson):
                     yaml_result = list(tmp)
 
                 for item in yaml_result:
-                    label = item['SolveLabel']
+                    label = item['solve_label']
 
                     if label not in json_result['Solve']:
                         json_result['Solve'][label] = {}
@@ -535,7 +535,7 @@ class MultiTaskGenWithYamlJson(SingleTaskGenWithYamlJson):
                     contents[i].append(one_command)
                     contents[i].append('if [ $? != 0 ]; then \n')
                     contents[i].append(f'echo --- >> {yaml_file} \n')
-                    contents[i].append(f'echo SolveLabel: {label} >> {yaml_file} \n')
+                    contents[i].append(f'echo solve_label: {label} >> {yaml_file} \n')
                     for metric in self.metric_list:
                         contents[i].append(f'echo {metric}: 0 >> {yaml_file} \n')
                     contents[i].append('fi \n')
@@ -603,11 +603,16 @@ def TestTaskGenMultiTask():
 def TestSingleTaskGen():
     label_list = ['a','b','c','d']
     inner_para_list = [[0,2],[0,3],[1,2],[1,3]]
+
+    # add label into the inner_para_list
+    for i,item in enumerate(inner_para_list):
+        item.append(label_list[i])
+        
     idx_list = [0,4,8]
     outer_para_list = [['mat0.txt','vec0.txt','result0.yaml'],['mat4.txt','vec4.txt','result4.yaml'],['mat8.txt','vec8.txt','result8.yaml']]
     metric_list = ['time','iter','resi']
 
-    command = './run -pa {} -pb {} -mat_file {} -vec_file {} -out_file {} \n'
+    command = './run -pa {} -pb {} -solve_label {} -mat_file {} -vec_file {} -out_file {} \n'
 
     a = SingleTaskGenWithYamlJson(metric_list,label_list,inner_para_list)
     a.Process(idx_list,outer_para_list)
@@ -618,14 +623,19 @@ def TestSingleTaskGen():
     a.GenerateScript(script_file,header,footer,command)
 
 def TestSingleTaskGenPermutation():
-    permutation = [1,3,0,2,4]
+    permutation = [1,3,0,2,4,5]
     label_list = ['a','b','c','d']
     inner_para_list = [[0,2],[0,3],[1,2],[1,3]]
+
+    # add label into the inner_para_list
+    for i,item in enumerate(inner_para_list):
+        item.append(label_list[i])
+        
     idx_list = [0,4,8]
     outer_para_list = [['mat0.txt','vec0.txt','result0.yaml'],['mat4.txt','vec4.txt','result4.yaml'],['mat8.txt','vec8.txt','result8.yaml']]
     metric_list = ['time','iter','resi']
 
-    command = './run -pa {} -pb {} -mat_file {} -vec_file {} -out_file {} \n'
+    command = './run -pa {} -pb {} -solve_label {} -mat_file {} -vec_file {} -out_file {} \n'
 
     a = SingleTaskGenWithYamlJson(metric_list,label_list,inner_para_list,permutation=permutation)
     a.Process(idx_list,outer_para_list)
@@ -640,11 +650,16 @@ def TestMultiTaskGen():
     num_task = 2
     label_list = ['a','b','c','d']
     inner_para_list = [[0,2],[0,3],[1,2],[1,3]]
+
+    # add label into the inner_para_list
+    for i,item in enumerate(inner_para_list):
+        item.append(label_list[i])
+        
     idx_list = [0,4,8]
     outer_para_list = [['mat0.txt','vec0.txt','result0.yaml'],['mat4.txt','vec4.txt','result4.yaml'],['mat8.txt','vec8.txt','result8.yaml']]
     metric_list = ['time','iter','resi']
 
-    command = './run -pa {} -pb {} -mat_file {} -vec_file {} -out_file {} \n'
+    command = './run -pa {} -pb {} -solve_label {} -mat_file {} -vec_file {} -out_file {} \n'
 
     a = MultiTaskGenWithYamlJson(num_task,metric_list,label_list,inner_para_list)
     a.Process(idx_list,outer_para_list)
@@ -655,15 +670,20 @@ def TestMultiTaskGen():
     a.GenerateScript(script_file,header,footer,command)
 
 def TestMultiTaskGenPermutation():
-    permutation = [1,3,0,2,4]
+    permutation = [1,3,0,2,4,5]
     num_task = 2
     label_list = ['a','b','c','d']
     inner_para_list = [[0,2],[0,3],[1,2],[1,3]]
+
+    # add label into the inner_para_list
+    for i,item in enumerate(inner_para_list):
+        item.append(label_list[i])
+        
     idx_list = [0,4,8]
     outer_para_list = [['mat0.txt','vec0.txt','result0.yaml'],['mat4.txt','vec4.txt','result4.yaml'],['mat8.txt','vec8.txt','result8.yaml']]
     metric_list = ['time','iter','resi']
 
-    command = './run -pa {} -pb {} -mat_file {} -vec_file {} -out_file {} \n'
+    command = './run -pa {} -pb {} -solve_label {} -mat_file {} -vec_file {} -out_file {} \n'
 
     a = MultiTaskGenWithYamlJson(num_task,metric_list,label_list,inner_para_list,permutation=permutation)
     a.Process(idx_list,outer_para_list)

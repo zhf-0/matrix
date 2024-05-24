@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
     char            yaml_file[PETSC_MAX_PATH_LEN];          
     char            ksp_name[PETSC_MAX_PATH_LEN];          
     char            pc_name[PETSC_MAX_PATH_LEN];          
+    char            solve_label[PETSC_MAX_PATH_LEN];          
 	int             arg_index = 0;
 	FILE            *fp;
     
@@ -48,6 +49,11 @@ int main(int argc, char *argv[])
 	  {
 		 arg_index ++;
 		 strcpy(pc_name,argv[arg_index++]);
+	  }
+	  else if ( strcmp(argv[arg_index], "-solve_label") == 0 )
+	  {
+		 arg_index ++;
+		 strcpy(solve_label,argv[arg_index++]);
 	  }
 	  else
 	  {
@@ -128,7 +134,7 @@ int main(int argc, char *argv[])
 		PetscFOpen(PETSC_COMM_SELF, yaml_file, "a", &fp);
 
 		PetscFPrintf(PETSC_COMM_SELF, fp, "--- \n");
-		PetscFPrintf(PETSC_COMM_SELF, fp, "SolveLabel: %s-%s \n",ksp_name,pc_name);
+		PetscFPrintf(PETSC_COMM_SELF, fp, "solve_label: %s-%s \n",ksp_name,pc_name);
 		PetscFPrintf(PETSC_COMM_SELF, fp, "iter: %d \n",its);
 		PetscFPrintf(PETSC_COMM_SELF, fp, "stop_reason: %d \n",reason);
 		PetscFPrintf(PETSC_COMM_SELF, fp, "r_norm: %e \n",res0);
