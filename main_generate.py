@@ -388,7 +388,7 @@ def GenerateScript3(script_path, header, footer):
             para.DefineFixPara('mat_path',mat_path)
             para.DefineFixPara('ss_id',idx)
 
-            json_path = os.path.join(json_dir,f'result{i}.json')
+            json_path = os.path.join(json_dir,f'result{idx}.json')
             json_result = {}
             json_result['PDE_idx'] = 0
             json_result['GenMat'] = para.para

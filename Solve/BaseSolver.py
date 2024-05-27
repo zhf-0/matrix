@@ -399,6 +399,7 @@ class SingleTaskGenWithYamlJson(TaskGen):
             contents.append(f'echo solve_label: {label} >> {yaml_file} \n')
             for metric in self.metric_list:
                 contents.append(f'echo {metric}: 0 >> {yaml_file} \n')
+            contents.append(f'echo processed: 0 >> {yaml_file} \n')
             contents.append('fi \n')
 
         with open(file_name,'w',encoding='utf-8') as f:
@@ -538,6 +539,7 @@ class MultiTaskGenWithYamlJson(SingleTaskGenWithYamlJson):
                     contents[i].append(f'echo solve_label: {label} >> {yaml_file} \n')
                     for metric in self.metric_list:
                         contents[i].append(f'echo {metric}: 0 >> {yaml_file} \n')
+                    contents.append(f'echo processed: 0 >> {yaml_file} \n')
                     contents[i].append('fi \n')
 
         for k in range(self.num_task):

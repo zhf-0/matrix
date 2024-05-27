@@ -1,5 +1,4 @@
 import os
-from operator import itemgetter
 import json
 import yaml
 from scipy.sparse import csr_matrix, load_npz
@@ -32,7 +31,6 @@ class SingleTask4Petsc(BaseSolver.SingleTaskGenWithYamlJson):
         for i in range(len1):
             idx = idx_list[i]
             mat_file = mat_list[i]
-            vec_file = vec_list[i]
             out_file = out_list[i]
             if not os.path.exists(out_file):
                 print(f'begin to change the format of matrix {idx}')
@@ -40,9 +38,10 @@ class SingleTask4Petsc(BaseSolver.SingleTaskGenWithYamlJson):
                 petsc_A = PETSc.Mat().createAIJ(size=csr_A.shape, csr=(csr_A.indptr, csr_A.indices, csr_A.data))
 
                 if vec_exist:
-                    b = np.ones(csr_A.shape[0])
-                else:
+                    vec_file = vec_list[i]
                     b = np.load(vec_file)
+                else:
+                    b = np.ones(csr_A.shape[0])
                 petsc_b = PETSc.Vec().createSeq(len(b)) 
                 petsc_b.setValues(range(len(b)), b) 
 
@@ -129,7 +128,6 @@ class MultiTask4PetscInDesktop(BaseSolver.MultiTaskGenWithYamlJson):
         for i in range(len1):
             idx = idx_list[i]
             mat_file = mat_list[i]
-            vec_file = vec_list[i]
             out_file = out_list[i]
             if not os.path.exists(out_file):
                 print(f'begin to change the format of matrix {idx}')
@@ -137,9 +135,10 @@ class MultiTask4PetscInDesktop(BaseSolver.MultiTaskGenWithYamlJson):
                 petsc_A = PETSc.Mat().createAIJ(size=csr_A.shape, csr=(csr_A.indptr, csr_A.indices, csr_A.data))
 
                 if vec_exist:
-                    b = np.ones(csr_A.shape[0])
-                else:
+                    vec_file = vec_list[i]
                     b = np.load(vec_file)
+                else:
+                    b = np.ones(csr_A.shape[0])
                 petsc_b = PETSc.Vec().createSeq(len(b)) 
                 petsc_b.setValues(range(len(b)), b) 
 
@@ -148,10 +147,76 @@ class MultiTask4PetscInDesktop(BaseSolver.MultiTaskGenWithYamlJson):
                 viewer(petsc_b)
 
     def DataAnalysis(self,idx_list):
+        import re
+        from operator import itemgetter
+        self.summary['analysis'] = {}
+        self.summary['analysis']['0.25_time'] = []
+        self.summary['analysis']['0.25_iter'] = []
+        self.summary['analysis']['0.50_time'] = []
+        self.summary['analysis']['0.50_iter'] = []
+        self.summary['analysis']['min_time'] = []
+        self.summary['analysis']['min_iter'] = []
+
         for idx in idx_list:
             json_file = os.path.join(self.json_dir,f'result{idx}.json')
             with open(json_file,'r',encoding='utf-8') as f:
                 json_result = json.load(f)
+
+            json_result['Solve']['analysis'] = {}
+            time_list = []
+            iter_list = []
+            for label in self.label_list:
+                if json_result['Solve'][label]['stop_reason'][0] > 0:
+                    avg_time = sum(json_result['Solve'][label]['time'])/self.batch_size
+                    time_list.append( (label,avg_time) )
+
+                    avg_iter = sum(json_result['Solve'][label]['iter'])/self.batch_size
+                    iter_list.append( (label,avg_iter) )
+
+                if re.search('25',label):
+                    json_result['Solve']['analysis']['0.25_time'] = sum(json_result['Solve'][label]['time'])/self.batch_size
+                    self.summary['analysis']['0.25_time'].append(sum(json_result['Solve'][label]['time'])/self.batch_size)
+
+                    json_result['Solve']['analysis']['0.25_iter'] = sum(json_result['Solve'][label]['iter'])/self.batch_size
+                    self.summary['analysis']['0.25_iter'].append(sum(json_result['Solve'][label]['iter'])/self.batch_size)
+                    if json_result['Solve'][label]['stop_reason'][0] > 0:
+                        json_result['Solve']['analysis']['0.25_succ'] = True
+                    else:
+                        json_result['Solve']['analysis']['0.25_succ'] = False
+
+                if re.search('50',label):
+                    json_result['Solve']['analysis']['0.50_time'] = sum(json_result['Solve'][label]['time'])/self.batch_size
+                    self.summary['analysis']['0.50_time'].append(sum(json_result['Solve'][label]['time'])/self.batch_size)
+                    json_result['Solve']['analysis']['0.50_iter'] = sum(json_result['Solve'][label]['iter'])/self.batch_size
+                    self.summary['analysis']['0.50_iter'].append(sum(json_result['Solve'][label]['iter'])/self.batch_size)
+                    if json_result['Solve'][label]['stop_reason'][0] > 0:
+                        json_result['Solve']['analysis']['0.50_succ'] = True
+                    else:
+                        json_result['Solve']['analysis']['0.50_succ'] = False
+
+            if len(time_list) == 0:
+                json_result['Solve']['analysis']['min_time_label'] = None
+                self.summary['analysis']['min_time'].append(-1)
+            else:
+                sorted_time_list = sorted(time_list, key = itemgetter(1))
+                json_result['Solve']['analysis']['min_time_label'] = sorted_time_list[0][0]
+                json_result['Solve']['analysis']['min_time'] = sorted_time_list[0][1]
+                self.summary['analysis']['min_time'].append(sorted_time_list[0][1])
+                
+            if len(iter_list) == 0:
+                json_result['Solve']['analysis']['min_iter_label'] = None
+                self.summary['analysis']['min_iter'].append(-1)
+            else:
+                sorted_iter_list = sorted(iter_list, key = itemgetter(1))
+                json_result['Solve']['analysis']['min_iter_label'] = sorted_iter_list[0][0]
+                json_result['Solve']['analysis']['min_iter'] = sorted_iter_list[0][1]
+                self.summary['analysis']['min_iter'].append(sorted_iter_list[0][1])
+                
+            with open(json_file,'w',encoding='utf-8') as f:
+                json.dump(json_result,f,indent=4)
+
+        with open(self.summary_file,'w',encoding='utf-8') as f:
+            json.dump(self.summary,f,indent=4)
 
     def GenerateScript(self,file_name,header,footer,command):
         contents = [ [] for i in range(self.num_task)]
@@ -185,6 +250,7 @@ class MultiTask4PetscInDesktop(BaseSolver.MultiTaskGenWithYamlJson):
                     contents[i].append(f'echo solve_label: {label} >> {yaml_file} \n')
                     for metric in self.metric_list:
                         contents[i].append(f'echo {metric}: -100 >> {yaml_file} \n')
+                    contents.append(f'echo processed: 0 >> {yaml_file} \n')
                     contents[i].append('fi \n')
 
         for k in range(self.num_task):
@@ -256,7 +322,7 @@ def TestMultiTask():
     script_file = 'run.sh'
     header = ['#!/bin/bash \n']
     footer = ['echo finished !! \n']
-    command = 'mpirun --cpu-set {} -n 1 ./rs -ksp_type gmres -pc_type hypre -pc_hypre_boomeramg_stong_threshold {} -solve_label {}  -mat_file {} -yaml_file {} \n'
+    command = 'mpirun --cpu-set {} -n 1 ./rs -ksp_type gmres -pc_type hypre -pc_hypre_boomeramg_strong_threshold {} -solve_label {}  -mat_file {} -yaml_file {} \n'
     a.GenerateScript(script_file,header,footer,command)
 
 if __name__ == '__main__':
