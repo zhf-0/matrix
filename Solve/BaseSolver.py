@@ -695,6 +695,23 @@ def TestMultiTaskGenPermutation():
     footer = ['echo finished !! \n']
     a.GenerateScript(script_file,header,footer,command)
 
+def TestTaskGenNoInnerPar():
+    label_list = ['non']
+    inner_para_list = [['']]
+    idx_list = [0,4,8]
+    outer_para_list = [['mat0.txt','vec0.txt','output0.txt'],['mat4.txt','vec4.txt','output4.txt'],['mat8.txt','vec8.txt','output8.txt']]
+
+    command = './run {} -pa a -pb b -mat_file {} -vec_file {} -out_file {} \n'
+
+
+    a = TaskGen(label_list,inner_para_list)
+    a.Process(idx_list,outer_para_list)
+
+    script_file = 'run.sh'
+    header = ['#!/bin/bash \n']
+    footer = ['echo finished !! \n']
+    a.GenerateScript(script_file,header,footer,command)
+
 if __name__ == '__main__':
     # TestTaskGen()
     # TestTaskGenPermutation()
@@ -704,4 +721,6 @@ if __name__ == '__main__':
     # TestSingleTaskGenPermutation()
     
     # TestMultiTaskGen()
-    TestMultiTaskGenPermutation()
+    # TestMultiTaskGenPermutation()
+
+    TestTaskGenNoInnerPar()

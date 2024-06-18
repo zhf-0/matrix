@@ -4,6 +4,7 @@ import yaml
 from scipy.sparse import csr_matrix, load_npz
 from petsc4py import PETSc
 import numpy as np
+from operator import itemgetter
 
 import BaseSolver
 
@@ -61,32 +62,35 @@ class SingleTask4Petsc(BaseSolver.SingleTaskGenWithYamlJson):
             self.summary[label] = []
 
         for idx in idx_list:
-            json_file = os.path.join(self.json_dir,f'result{idx}.json')
-            with open(json_file,'r',encoding='utf-8') as f:
-                json_result = json.load(f)
-
-            time_list = []
-            for label in self.label_list:
-                if json_result['Solve'][label]['stop_reason'] > 0:
-                    avg_time = ( json_result['Solve'][label]['time'] )/self.batch_size
-                    time_list.append( (label, avg_time) )
-
-            if len(time_list) == 0:
-                class_name = 'failed'
+            if idx not in self.summary['total_list']:
+                print('the matrix has not been solved:',idx)
             else:
-                sorted_time_list = sorted(time_list, key = itemgetter(1))
-                json_result['Solve']['sorted_time'] = sorted_time_list
-                class_name = sorted_time_list[0][0]
+                json_file = os.path.join(self.json_dir,f'result{idx}.json')
+                with open(json_file,'r',encoding='utf-8') as f:
+                    json_result = json.load(f)
+
+                time_list = []
+                for label in self.label_list:
+                    if json_result['Solve'][label]['stop_reason'] > 0:
+                        avg_time = ( json_result['Solve'][label]['time'] )/self.batch_size
+                        time_list.append( (label, avg_time) )
+
+                if len(time_list) == 0:
+                    class_name = 'failed'
+                else:
+                    sorted_time_list = sorted(time_list, key = itemgetter(1))
+                    json_result['Solve']['sorted_time'] = sorted_time_list
+                    class_name = sorted_time_list[0][0]
 
 
-            json_result['class'] = class_name
-            self.summary['total_num'] += 1
-            self.summary['total_list'].append(idx)
-            self.summary[class_name].append(idx)
-            self.summary[class_name+'_num'] += 1
-            
-            with open(json_file,'w',encoding='utf-8') as f:
-                json.dump(json_result,f,indent=4)
+                json_result['class'] = class_name
+                self.summary['total_num'] += 1
+                self.summary['total_list'].append(idx)
+                self.summary[class_name].append(idx)
+                self.summary[class_name+'_num'] += 1
+                
+                with open(json_file,'w',encoding='utf-8') as f:
+                    json.dump(json_result,f,indent=4)
 
         with open(self.summary_file,'w',encoding='utf-8') as f:
             json.dump(self.summary,f,indent=4)
@@ -158,62 +162,65 @@ class MultiTask4PetscInDesktop(BaseSolver.MultiTaskGenWithYamlJson):
         self.summary['analysis']['min_iter'] = []
 
         for idx in idx_list:
-            json_file = os.path.join(self.json_dir,f'result{idx}.json')
-            with open(json_file,'r',encoding='utf-8') as f:
-                json_result = json.load(f)
-
-            json_result['Solve']['analysis'] = {}
-            time_list = []
-            iter_list = []
-            for label in self.label_list:
-                if json_result['Solve'][label]['stop_reason'][0] > 0:
-                    avg_time = sum(json_result['Solve'][label]['time'])/self.batch_size
-                    time_list.append( (label,avg_time) )
-
-                    avg_iter = sum(json_result['Solve'][label]['iter'])/self.batch_size
-                    iter_list.append( (label,avg_iter) )
-
-                if re.search('25',label):
-                    json_result['Solve']['analysis']['0.25_time'] = sum(json_result['Solve'][label]['time'])/self.batch_size
-                    self.summary['analysis']['0.25_time'].append(sum(json_result['Solve'][label]['time'])/self.batch_size)
-
-                    json_result['Solve']['analysis']['0.25_iter'] = sum(json_result['Solve'][label]['iter'])/self.batch_size
-                    self.summary['analysis']['0.25_iter'].append(sum(json_result['Solve'][label]['iter'])/self.batch_size)
-                    if json_result['Solve'][label]['stop_reason'][0] > 0:
-                        json_result['Solve']['analysis']['0.25_succ'] = True
-                    else:
-                        json_result['Solve']['analysis']['0.25_succ'] = False
-
-                if re.search('50',label):
-                    json_result['Solve']['analysis']['0.50_time'] = sum(json_result['Solve'][label]['time'])/self.batch_size
-                    self.summary['analysis']['0.50_time'].append(sum(json_result['Solve'][label]['time'])/self.batch_size)
-                    json_result['Solve']['analysis']['0.50_iter'] = sum(json_result['Solve'][label]['iter'])/self.batch_size
-                    self.summary['analysis']['0.50_iter'].append(sum(json_result['Solve'][label]['iter'])/self.batch_size)
-                    if json_result['Solve'][label]['stop_reason'][0] > 0:
-                        json_result['Solve']['analysis']['0.50_succ'] = True
-                    else:
-                        json_result['Solve']['analysis']['0.50_succ'] = False
-
-            if len(time_list) == 0:
-                json_result['Solve']['analysis']['min_time_label'] = None
-                self.summary['analysis']['min_time'].append(-1)
+            if idx not in self.summary['total_list']:
+                print('the matrix has not been solved:',idx)
             else:
-                sorted_time_list = sorted(time_list, key = itemgetter(1))
-                json_result['Solve']['analysis']['min_time_label'] = sorted_time_list[0][0]
-                json_result['Solve']['analysis']['min_time'] = sorted_time_list[0][1]
-                self.summary['analysis']['min_time'].append(sorted_time_list[0][1])
-                
-            if len(iter_list) == 0:
-                json_result['Solve']['analysis']['min_iter_label'] = None
-                self.summary['analysis']['min_iter'].append(-1)
-            else:
-                sorted_iter_list = sorted(iter_list, key = itemgetter(1))
-                json_result['Solve']['analysis']['min_iter_label'] = sorted_iter_list[0][0]
-                json_result['Solve']['analysis']['min_iter'] = sorted_iter_list[0][1]
-                self.summary['analysis']['min_iter'].append(sorted_iter_list[0][1])
-                
-            with open(json_file,'w',encoding='utf-8') as f:
-                json.dump(json_result,f,indent=4)
+                json_file = os.path.join(self.json_dir,f'result{idx}.json')
+                with open(json_file,'r',encoding='utf-8') as f:
+                    json_result = json.load(f)
+
+                json_result['Solve']['analysis'] = {}
+                time_list = []
+                iter_list = []
+                for label in self.label_list:
+                    if json_result['Solve'][label]['stop_reason'][0] > 0:
+                        avg_time = sum(json_result['Solve'][label]['time'])/self.batch_size
+                        time_list.append( (label,avg_time) )
+
+                        avg_iter = sum(json_result['Solve'][label]['iter'])/self.batch_size
+                        iter_list.append( (label,avg_iter) )
+
+                    if re.search('25',label):
+                        json_result['Solve']['analysis']['0.25_time'] = sum(json_result['Solve'][label]['time'])/self.batch_size
+                        self.summary['analysis']['0.25_time'].append(sum(json_result['Solve'][label]['time'])/self.batch_size)
+
+                        json_result['Solve']['analysis']['0.25_iter'] = sum(json_result['Solve'][label]['iter'])/self.batch_size
+                        self.summary['analysis']['0.25_iter'].append(sum(json_result['Solve'][label]['iter'])/self.batch_size)
+                        if json_result['Solve'][label]['stop_reason'][0] > 0:
+                            json_result['Solve']['analysis']['0.25_succ'] = True
+                        else:
+                            json_result['Solve']['analysis']['0.25_succ'] = False
+
+                    if re.search('50',label):
+                        json_result['Solve']['analysis']['0.50_time'] = sum(json_result['Solve'][label]['time'])/self.batch_size
+                        self.summary['analysis']['0.50_time'].append(sum(json_result['Solve'][label]['time'])/self.batch_size)
+                        json_result['Solve']['analysis']['0.50_iter'] = sum(json_result['Solve'][label]['iter'])/self.batch_size
+                        self.summary['analysis']['0.50_iter'].append(sum(json_result['Solve'][label]['iter'])/self.batch_size)
+                        if json_result['Solve'][label]['stop_reason'][0] > 0:
+                            json_result['Solve']['analysis']['0.50_succ'] = True
+                        else:
+                            json_result['Solve']['analysis']['0.50_succ'] = False
+
+                if len(time_list) == 0:
+                    json_result['Solve']['analysis']['min_time_label'] = None
+                    self.summary['analysis']['min_time'].append(-1)
+                else:
+                    sorted_time_list = sorted(time_list, key = itemgetter(1))
+                    json_result['Solve']['analysis']['min_time_label'] = sorted_time_list[0][0]
+                    json_result['Solve']['analysis']['min_time'] = sorted_time_list[0][1]
+                    self.summary['analysis']['min_time'].append(sorted_time_list[0][1])
+                    
+                if len(iter_list) == 0:
+                    json_result['Solve']['analysis']['min_iter_label'] = None
+                    self.summary['analysis']['min_iter'].append(-1)
+                else:
+                    sorted_iter_list = sorted(iter_list, key = itemgetter(1))
+                    json_result['Solve']['analysis']['min_iter_label'] = sorted_iter_list[0][0]
+                    json_result['Solve']['analysis']['min_iter'] = sorted_iter_list[0][1]
+                    self.summary['analysis']['min_iter'].append(sorted_iter_list[0][1])
+                    
+                with open(json_file,'w',encoding='utf-8') as f:
+                    json.dump(json_result,f,indent=4)
 
         with open(self.summary_file,'w',encoding='utf-8') as f:
             json.dump(self.summary,f,indent=4)
