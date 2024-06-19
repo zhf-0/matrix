@@ -29,7 +29,7 @@ void write_yaml(const char *filename,
 				const char *label, 
 				Res * result)
 {
-    FILE *fp = fopen(filename, "w");
+    FILE *fp = fopen(filename, "a");
 
     if ( fp == NULL ) fasp_chkerr(ERROR_OPEN_FILE, filename);
 

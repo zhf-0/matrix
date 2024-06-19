@@ -54,9 +54,9 @@ class SingleTask4Fasp(BaseSolver.SingleTaskGenWithYamlJson):
                         f.write(str(line)+ '\n')
 
     def DataAnalysis(self,idx_list):
-        '''
-        statistic
-        '''
+        print('==============================================')
+        print('begin to analysis data')
+
         self.summary['failed_num'] = 0
         self.summary['failed'] = []
         for label in self.label_list:
@@ -148,6 +148,9 @@ class MultiTask4Fasp(BaseSolver.MultiTaskGenWithYamlJson):
     def DataAnalysis(self,idx_list):
         import re
         from operator import itemgetter
+
+        print('==============================================')
+        print('begin to analysis data')
         self.summary['analysis'] = {}
         self.summary['analysis']['0.25_time'] = []
         self.summary['analysis']['0.25_iter'] = []
