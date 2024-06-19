@@ -248,7 +248,7 @@ def TestMultiTask():
 
     os.makedirs('./MtxMat',exist_ok=True)
     out_mat_template = './MtxMat/mat{}.mtx'
-    out_vec_template = './MtxMat/vec{}.mtx'
+    out_vec_template = './MtxMat/vec{}.txt'
     out_mat_list = []
     out_vec_list = []
 

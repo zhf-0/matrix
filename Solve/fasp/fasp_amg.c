@@ -257,6 +257,7 @@ int main (int argc, const char * argv[])
     //fasp_solver_amg(&A, &b, &x, &amgparam);
 	Res result;
     local_fasp_solver_dcsr_krylov_amg(&A, &b, &x, &itspar, &amgparam, &result);
+	printf("iter = %d, time = %e \n", result.iter, result.time);
 
 	if (strlen(yaml_file) != 0)
 		write_yaml(yaml_file,solve_label,&result);
