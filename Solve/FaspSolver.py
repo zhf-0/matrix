@@ -1,53 +1,57 @@
 import os
 import json
 import yaml
+import scipy
 from scipy.sparse import csr_matrix, load_npz
-from petsc4py import PETSc
 import numpy as np
 from operator import itemgetter
 
 import BaseSolver
 
-class SingleTask4Petsc(BaseSolver.SingleTaskGenWithYamlJson):
+class SingleTask4Fasp(BaseSolver.SingleTaskGenWithYamlJson):
     def __init__(self,metric_list,label_list,inner_para_list,batch_size=3,permutation=None,json_dir='../JsonFiles/',yaml_dir='./YamlFiles/'):
         super().__init__(metric_list,label_list,inner_para_list,batch_size,permutation,json_dir,yaml_dir)
 
-    def ChangeMatFormat(self,out_list,mat_list,vec_list=None):
+    def ChangeMatFormat(self,out_mat_list,out_vec_list,in_mat_list,in_vec_list=None):
         '''
         the format of the input matrix is scipy.sparse.csr_matrix
         the format of the input vector is numpy
-        there is only one output in binary that includes the matrix and the vector
+        the format of the output matrix is mtx
+        the format of the output vector is txt
         '''
-        len1 = len(out_list)
-        len2 = len(mat_list)
+        len1 = len(out_mat_list)
+        len2 = len(out_vec_list)
+        len3 = len(in_mat_list)
         assert len1 == len2
+        assert len1 == len3
 
         vec_exist = True
-        if vec_list is not None:
-            len3 = len(vec_list)
-            assert len1 == len3
+        if in_vec_list is not None:
+            len4 = len(in_vec_list)
+            assert len1 == len4
         else:
             vec_exist = False
 
         for i in range(len1):
-            mat_file = mat_list[i]
-            out_file = out_list[i]
-            if not os.path.exists(out_file):
-                print(f'begin to change the format of matrix: {mat_file}')
-                csr_A = load_npz(mat_file)
-                petsc_A = PETSc.Mat().createAIJ(size=csr_A.shape, csr=(csr_A.indptr, csr_A.indices, csr_A.data))
+            in_mat_file = in_mat_list[i]
+            out_mat_file = out_mat_list[i]
+            out_vec_file = out_vec_list[i]
+            if not os.path.exists(out_mat_file):
+                print(f'begin to change the format of matrix: {in_mat_file}')
+                csr_A = load_npz(in_mat_file)
+                scipy.io.mmwrite(out_mat_file,csr_A.tocoo())
 
                 if vec_exist:
-                    vec_file = vec_list[i]
+                    vec_file = in_vec_list[i]
                     b = np.load(vec_file)
                 else:
                     b = np.ones(csr_A.shape[0])
-                petsc_b = PETSc.Vec().createSeq(len(b)) 
-                petsc_b.setValues(range(len(b)), b) 
 
-                viewer = PETSc.Viewer().createBinary(out_file, 'w')
-                viewer(petsc_A)
-                viewer(petsc_b)
+                vec = b.tolist()
+                with open(out_vec_file,'w',encoding='utf-8') as f:
+                    f.write(f'{b.shape[0]} \n')
+                    for line in vec:
+                        f.write(str(line)+ '\n')
 
     def DataAnalysis(self,idx_list):
         '''
@@ -70,7 +74,7 @@ class SingleTask4Petsc(BaseSolver.SingleTaskGenWithYamlJson):
 
                 time_list = []
                 for label in self.label_list:
-                    if json_result['Solve'][label]['stop_reason'] > 0:
+                    if json_result['Solve'][label]['iter'] > 0:
                         avg_time = ( json_result['Solve'][label]['time'] )/self.batch_size
                         time_list.append( (label, avg_time) )
 
@@ -94,59 +98,52 @@ class SingleTask4Petsc(BaseSolver.SingleTaskGenWithYamlJson):
         with open(self.summary_file,'w',encoding='utf-8') as f:
             json.dump(self.summary,f,indent=4)
 
-class MultiTask4PetscInDesktop(BaseSolver.MultiTaskGenWithYamlJson):
-    def __init__(self,cpu_list,num_task,metric_list,label_list,inner_para_list,batch_size=3,permutation=None,json_dir='../JsonFiles/',yaml_dir='./YamlFiles/'):
+class MultiTask4Fasp(BaseSolver.MultiTaskGenWithYamlJson):
+    def __init__(self,num_task,metric_list,label_list,inner_para_list,batch_size=3,permutation=None,json_dir='../JsonFiles/',yaml_dir='./YamlFiles/'):
         super().__init__(num_task,metric_list,label_list,inner_para_list,batch_size,permutation,json_dir,yaml_dir)
 
-        self.cpu_list = cpu_list
-        num_cpu_per_task = len(self.cpu_list) // self.num_task
-        self.cpu_per_task = []
-        for i in range(self.num_task):
-            begin = i * num_cpu_per_task
-            end = (i + 1) * num_cpu_per_task
-            s = ' '
-            for item in self.cpu_list[begin:end-1]:
-                s += f'{item},'
 
-            s += f'{self.cpu_list[end-1]} '
-            self.cpu_per_task.append( s )
-
-    def ChangeMatFormat(self,out_list,mat_list,vec_list=None):
+    def ChangeMatFormat(self,out_mat_list,out_vec_list,in_mat_list,in_vec_list=None):
         '''
         the format of the input matrix is scipy.sparse.csr_matrix
         the format of the input vector is numpy
-        there is only one output in binary that includes the matrix and the vector
+        the format of the output matrix is mtx
+        the format of the output vector is txt
         '''
-        len1 = len(out_list)
-        len2 = len(mat_list)
+        len1 = len(out_mat_list)
+        len2 = len(out_vec_list)
+        len3 = len(in_mat_list)
         assert len1 == len2
+        assert len1 == len3
 
         vec_exist = True
-        if vec_list is not None:
-            len3 = len(vec_list)
-            assert len1 == len3
+        if in_vec_list is not None:
+            len4 = len(in_vec_list)
+            assert len1 == len4
         else:
             vec_exist = False
 
         for i in range(len1):
-            mat_file = mat_list[i]
-            out_file = out_list[i]
-            if not os.path.exists(out_file):
-                print(f'begin to change the format of matrix: {mat_file}')
-                csr_A = load_npz(mat_file)
-                petsc_A = PETSc.Mat().createAIJ(size=csr_A.shape, csr=(csr_A.indptr, csr_A.indices, csr_A.data))
+            in_mat_file = in_mat_list[i]
+            out_mat_file = out_mat_list[i]
+            out_vec_file = out_vec_list[i]
+            if not os.path.exists(out_mat_file):
+                print(f'begin to change the format of matrix: {in_mat_file}')
+                csr_A = load_npz(in_mat_file)
+                scipy.io.mmwrite(out_mat_file,csr_A.tocoo())
 
                 if vec_exist:
-                    vec_file = vec_list[i]
+                    vec_file = in_vec_list[i]
                     b = np.load(vec_file)
                 else:
                     b = np.ones(csr_A.shape[0])
-                petsc_b = PETSc.Vec().createSeq(len(b)) 
-                petsc_b.setValues(range(len(b)), b) 
 
-                viewer = PETSc.Viewer().createBinary(out_file, 'w')
-                viewer(petsc_A)
-                viewer(petsc_b)
+                vec = b.tolist()
+                with open(out_vec_file,'w',encoding='utf-8') as f:
+                    f.write(f'{b.shape[0]} \n')
+                    for line in vec:
+                        f.write(str(line)+ '\n')
+
 
     def DataAnalysis(self,idx_list):
         import re
@@ -171,7 +168,7 @@ class MultiTask4PetscInDesktop(BaseSolver.MultiTaskGenWithYamlJson):
                 time_list = []
                 iter_list = []
                 for label in self.label_list:
-                    if json_result['Solve'][label]['stop_reason'][0] > 0:
+                    if json_result['Solve'][label]['iter'][0] > 0:
                         avg_time = sum(json_result['Solve'][label]['time'])/self.batch_size
                         time_list.append( (label,avg_time) )
 
@@ -184,7 +181,7 @@ class MultiTask4PetscInDesktop(BaseSolver.MultiTaskGenWithYamlJson):
 
                         json_result['Solve']['analysis']['0.25_iter'] = sum(json_result['Solve'][label]['iter'])/self.batch_size
                         self.summary['analysis']['0.25_iter'].append(sum(json_result['Solve'][label]['iter'])/self.batch_size)
-                        if json_result['Solve'][label]['stop_reason'][0] > 0:
+                        if json_result['Solve'][label]['iter'][0] > 0:
                             json_result['Solve']['analysis']['0.25_succ'] = True
                         else:
                             json_result['Solve']['analysis']['0.25_succ'] = False
@@ -194,7 +191,7 @@ class MultiTask4PetscInDesktop(BaseSolver.MultiTaskGenWithYamlJson):
                         self.summary['analysis']['0.50_time'].append(sum(json_result['Solve'][label]['time'])/self.batch_size)
                         json_result['Solve']['analysis']['0.50_iter'] = sum(json_result['Solve'][label]['iter'])/self.batch_size
                         self.summary['analysis']['0.50_iter'].append(sum(json_result['Solve'][label]['iter'])/self.batch_size)
-                        if json_result['Solve'][label]['stop_reason'][0] > 0:
+                        if json_result['Solve'][label]['iter'][0] > 0:
                             json_result['Solve']['analysis']['0.50_succ'] = True
                         else:
                             json_result['Solve']['analysis']['0.50_succ'] = False
@@ -223,60 +220,18 @@ class MultiTask4PetscInDesktop(BaseSolver.MultiTaskGenWithYamlJson):
         with open(self.summary_file,'w',encoding='utf-8') as f:
             json.dump(self.summary,f,indent=4)
 
-    def GenerateScript(self,file_name,header,footer,command):
-        contents = [ [] for i in range(self.num_task)]
-        total_num = len(self.all_para_list)
-
-        if total_num == 0:
-            print('Finished all computation')
-        else:
-            count_list = BaseSolver.LoadBalance(total_num,self.num_task)
-
-            for i in range(self.num_task):
-                begin = count_list[i]
-                end = count_list[i+1]
-                for j in range(begin,end):
-                    para = self.all_para_list[j]
-                    label = self.auxiliary_label_list[j]
-
-                    # add suffix 'i' to the name of yaml file according to the task index 
-                    yaml_file = para[-1] + f'{i}'
-                    para[-1] = yaml_file
-
-                    # move the cpu index to the first place by permutation,
-                    # change the cpu index according to the task index
-                    para[0] = self.cpu_per_task[i]
-
-                    one_command = command.format(*para)
-
-                    contents[i].append(one_command)
-                    contents[i].append('if [ $? != 0 ]; then \n')
-                    contents[i].append(f'echo --- >> {yaml_file} \n')
-                    contents[i].append(f'echo solve_label: {label} >> {yaml_file} \n')
-                    for metric in self.metric_list:
-                        contents[i].append(f'echo {metric}: -100 >> {yaml_file} \n')
-                    contents.append(f'echo processed: 0 >> {yaml_file} \n')
-                    contents[i].append('fi \n')
-
-        for k in range(self.num_task):
-            real_name = file_name + f'{k}'
-            with open(real_name,'w',encoding='utf-8') as f:
-                f.writelines(header)
-                f.writelines(contents[k])
-                f.writelines(footer)
-
 
 def TestMultiTask():
     yaml_dir = './YamlFiles'
+    yaml_template = 'result{}.yaml'
     json_dir = './JsonFiles'
     batch_size = 1
-    cpu_list = [20,21,22,23]
     num_task = 4
-    metric_list = ['iter','stop_reason','r_norm','b_norm','relative_norm','time']
+    metric_list = ['iter','r_norm','b_norm','relative_norm','time']
     ksp = 'gmres'
-    inner_para_list = [[] for i in range(99)]
+    inner_para_list = [[] for i in range(49)]
     label_list = []
-    for i in range(99):
+    for i in range(49):
         label = ksp+str(i+1)
         label_list.append(label)
         inner_para_list[i].append( (i+1)/100 )
@@ -285,41 +240,43 @@ def TestMultiTask():
 
     idx_list = list(range(10))
     outer_para_list = [[] for i in range(len(idx_list))]
-    yaml_template = 'result{}.yaml'
-    mat_list = []
-    vec_list = []
-    mat_dir = '../MatData/'
-    mat_template = 'scipy_csr{}.npz'
-    vec_template = 'b{}.npy'
-    formated_mat_dir = './PetscMat'
-    os.makedirs(formated_mat_dir,exist_ok=True)
-    out_template = 'petsc{}.dat'
-    out_list = []
+
+    in_mat_template = '../MatData/scipy_csr{}.npz'
+    in_vec_template = '../MatData/b{}.npy'
+    in_mat_list = []
+    in_vec_list = []
+
+    os.makedirs('./MtxMat',exist_ok=True)
+    out_mat_template = './MtxMat/mat{}.mtx'
+    out_vec_template = './MtxMat/vec{}.mtx'
+    out_mat_list = []
+    out_vec_list = []
+
     for i,idx in enumerate(idx_list):
-        mat_path = os.path.join(mat_dir,mat_template.format(idx))
-        mat_list.append(mat_path)
+        in_mat_file = in_mat_template.format(idx)
+        in_mat_list.append(in_mat_file)
         
-        vec_path = os.path.join(mat_dir,vec_template.format(idx)) 
-        vec_list.append(vec_path)
-
-        # placeholder
-        outer_para_list[i].append(' ')
-
-        formated_mat_path = os.path.join(formated_mat_dir,out_template.format(idx))
-        outer_para_list[i].append(formated_mat_path)
-        out_list.append(formated_mat_path)
-
-        yaml_path = os.path.join(yaml_dir,yaml_template.format(idx))
-        outer_para_list[i].append(yaml_path)
+        in_vec_file = in_vec_template.format(idx) 
+        in_vec_list.append(in_vec_file)
 
 
-    # move the first parameer of outer_para_list to the first place
-    permutation = [1,2,0,3,4]
+        out_mat_file = out_mat_template.format(idx)
+        out_mat_list.append(out_mat_file)
+        outer_para_list[i].append(out_mat_file)
 
-    a = MultiTask4PetscInDesktop(cpu_list,num_task,metric_list,label_list,inner_para_list,batch_size=batch_size,permutation=permutation,json_dir=json_dir)
+        out_vec_file = out_vec_template.format(idx)
+        out_vec_list.append(out_vec_file)
+        outer_para_list[i].append(out_vec_file)
+
+        yaml_file = os.path.join(yaml_dir,yaml_template.format(idx))
+        outer_para_list[i].append(yaml_file)
+
+
+
+    a = MultiTask4Fasp(num_task,metric_list,label_list,inner_para_list,batch_size=batch_size,json_dir=json_dir)
 
     # pre-process
-    # a.ChangeMatFormat(out_list,mat_list,vec_list)
+    # a.ChangeMatFormat(idx_list,out_list,mat_list,vec_list)
 
     a.Process(idx_list,outer_para_list)
 
@@ -327,8 +284,10 @@ def TestMultiTask():
     script_file = 'run.sh'
     header = ['#!/bin/bash \n']
     footer = ['echo finished !! \n']
-    command = 'mpirun --cpu-set {} -n 1 ./rs -ksp_type gmres -pc_type hypre -pc_hypre_boomeramg_strong_threshold {} -solve_label {}  -mat_file {} -yaml_file {} \n'
+    command = './fasp -ini amg_ua.dat -couple {} -solve_label {} -mat_file {} -vec_file {} -yaml_file {} \n'
     a.GenerateScript(script_file,header,footer,command)
+
+    a.DataAnalysis(idx_list)
 
 if __name__ == '__main__':
     TestMultiTask()

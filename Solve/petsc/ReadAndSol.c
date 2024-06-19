@@ -28,6 +28,9 @@ int main(int argc, char *argv[])
     ierr = MPI_Comm_size(PETSC_COMM_WORLD,&size);CHKERRMPI(ierr);
     ierr = MPI_Comm_rank(PETSC_COMM_WORLD,&rank);CHKERRMPI(ierr);
 
+	memset(yaml_file,'\0',sizeof(PETSC_MAX_PATH_LEN*sizeof(char)));
+	memset(solve_label,'\0',sizeof(PETSC_MAX_PATH_LEN*sizeof(char)));
+
 	while (arg_index < argc)
 	{
 	  if ( strcmp(argv[arg_index], "-mat_file") == 0 )
@@ -131,19 +134,25 @@ int main(int argc, char *argv[])
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	if(rank == 0)
 	{
-		PetscFOpen(PETSC_COMM_SELF, yaml_file, "a", &fp);
+		if(strlen(yaml_file) != 0)
+		{
+			PetscFOpen(PETSC_COMM_SELF, yaml_file, "a", &fp);
 
-		PetscFPrintf(PETSC_COMM_SELF, fp, "--- \n");
-		PetscFPrintf(PETSC_COMM_SELF, fp, "solve_label: %s \n",solve_label);
-		PetscFPrintf(PETSC_COMM_SELF, fp, "iter: %d \n",its);
-		PetscFPrintf(PETSC_COMM_SELF, fp, "stop_reason: %d \n",reason);
-		PetscFPrintf(PETSC_COMM_SELF, fp, "r_norm: %e \n",res0);
-		PetscFPrintf(PETSC_COMM_SELF, fp, "b_norm: %e \n",res1);
-		PetscFPrintf(PETSC_COMM_SELF, fp, "relative_norm: %e \n",res0/res1);
-		PetscFPrintf(PETSC_COMM_SELF, fp, "time: %e \n",real_stop-real_begin);
-		PetscFPrintf(PETSC_COMM_SELF, fp, "processed: 0 \n");
+			PetscFPrintf(PETSC_COMM_SELF, fp, "--- \n");
 
-		PetscFClose(PETSC_COMM_SELF, fp);
+			if(strlen(solve_label) != 0)
+				PetscFPrintf(PETSC_COMM_SELF, fp, "solve_label: %s \n",solve_label);
+
+			PetscFPrintf(PETSC_COMM_SELF, fp, "iter: %d \n",its);
+			PetscFPrintf(PETSC_COMM_SELF, fp, "stop_reason: %d \n",reason);
+			PetscFPrintf(PETSC_COMM_SELF, fp, "r_norm: %e \n",res0);
+			PetscFPrintf(PETSC_COMM_SELF, fp, "b_norm: %e \n",res1);
+			PetscFPrintf(PETSC_COMM_SELF, fp, "relative_norm: %e \n",res0/res1);
+			PetscFPrintf(PETSC_COMM_SELF, fp, "time: %e \n",real_stop-real_begin);
+			PetscFPrintf(PETSC_COMM_SELF, fp, "processed: 0 \n");
+
+			PetscFClose(PETSC_COMM_SELF, fp);
+		}
 
 
 		ierr = PetscPrintf(PETSC_COMM_SELF,"================================= \n");CHKERRQ(ierr);

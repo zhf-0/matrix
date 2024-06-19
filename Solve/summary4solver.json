@@ -1,0 +1,12 @@
+{
+    "total_num": 0,
+    "total_list": [],
+    "analysis": {
+        "0.25_time": [],
+        "0.25_iter": [],
+        "0.50_time": [],
+        "0.50_iter": [],
+        "min_time": [],
+        "min_iter": []
+    }
+}
